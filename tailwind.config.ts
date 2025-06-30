@@ -47,6 +47,14 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        purple: {
+          500: "hsl(263 70% 50%)",
+          600: "hsl(263 70% 45%)",
+        },
+        blue: {
+          500: "hsl(221 83% 53%)",
+          600: "hsl(221 83% 48%)",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -84,6 +92,9 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        wave: "wave 2s ease-in-out infinite",
+        "bounce-slow": "bounce 3s infinite",
       },
     },
   },
