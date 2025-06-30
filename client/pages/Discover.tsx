@@ -1,11 +1,11 @@
 import Layout from "@/components/Layout";
-import CreateLayer from "@/components/CreateLayer";
+import DiscoveryFeed from "@/components/DiscoveryFeed";
 
-export default function Index() {
+export default function Discover() {
   return (
     <Layout>
       <div className="min-h-screen py-8">
-        <CreateLayer />
+        <DiscoveryFeed />
       </div>
     </Layout>
   );
