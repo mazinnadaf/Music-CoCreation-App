@@ -183,12 +183,12 @@ export default function DiscoveryFeed() {
         </div>
       </div>
 
-      {/* Feed */}
-      <div className="grid gap-4">
+      {/* Feed - Mobile optimized spacing */}
+      <div className="space-y-4">
         {filteredTracks.map((track) => (
           <Card
             key={track.id}
-            className="gradient-card p-6 border-border hover:border-primary/50 transition-colors"
+            className="gradient-card p-4 border-border active:border-primary/50 transition-colors"
           >
             <div className="flex items-start space-x-4">
               {/* Avatar */}
