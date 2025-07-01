@@ -19,7 +19,7 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile App Container */}
-      <div className="max-w-sm mx-auto bg-background h-[700px] relative overflow-hidden border-x border-border shadow-2xl flex flex-col">
+      <div className="max-w-sm mx-auto bg-background h-[800px] relative overflow-hidden border-x border-border shadow-2xl flex flex-col">
         {/* Mobile Header - Simplified */}
         <header className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50 safe-area-top">
           <div className="px-4 py-3">
