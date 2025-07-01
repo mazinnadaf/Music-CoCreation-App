@@ -207,21 +207,23 @@ export default function CreateLayer() {
               </div>
             </div>
             <h3 className="text-lg font-semibold leading-tight">
-              This is sounding great!
+              🔥 This is fire!
             </h3>
             <p className="text-muted-foreground text-sm leading-relaxed px-2">
-              Ready to take it to the next level? Share your loop or invite a
-              friend to collaborate.
+              Your track is sounding amazing! Ready to share it with the world
+              or get a friend to join in?
             </p>
             <div className="space-y-3 pt-2">
               <Button
                 variant="outline"
                 className="w-full border-accent/20 hover:border-accent/50 active:scale-[0.98] transition-transform p-3 h-auto"
               >
-                Share Loop
+                <span className="mr-2">📱</span>
+                Share Your Track
               </Button>
               <Button className="w-full gradient-primary border-0 active:scale-[0.98] transition-transform p-3 h-auto font-semibold">
-                Invite Collaborator
+                <span className="mr-2">👯</span>
+                Invite a Friend
               </Button>
             </div>
           </div>
