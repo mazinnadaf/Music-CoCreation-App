@@ -13,11 +13,11 @@ interface Layer {
 }
 
 const SUGGESTED_PROMPTS = [
-  "a dreamy synth melody inspired by Tame Impala, 120 BPM",
-  "a punchy lo-fi drum beat",
-  "smooth jazz bass line in F major",
-  "ambient pad sounds with reverb",
-  "uplifting acoustic guitar strumming",
+  "a chill dreamy melody that sounds like a sunset",
+  "some bouncy drums that make you want to dance",
+  "a deep bass that hits just right",
+  "soft background vibes for studying",
+  "happy acoustic guitar like a coffee shop",
 ];
 
 export default function CreateLayer() {
@@ -135,14 +135,14 @@ export default function CreateLayer() {
             <div className="bg-accent/10 border border-accent/20 rounded-xl p-4 space-y-3">
               <div className="flex items-start space-x-3">
                 <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Zap className="h-4 w-4 text-accent" />
+                  <span className="text-lg">🔥</span>
                 </div>
                 <div className="space-y-2 flex-1">
                   <span className="font-medium text-accent block leading-tight">
-                    Great start! Every song needs rhythm.
+                    That's fire! Now let's add some beats 🥁
                   </span>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Try adding some drums to give your melody a foundation:
+                    Every great song needs some rhythm to get people moving:
                   </p>
                 </div>
               </div>
@@ -166,12 +166,12 @@ export default function CreateLayer() {
                 <div className="animate-spin h-5 w-5 mr-3">
                   <Music className="h-5 w-5" />
                 </div>
-                Creating your layer...
+                Making your sound...
               </>
             ) : (
               <>
                 <Sparkles className="h-5 w-5 mr-3" />
-                Create Layer
+                Make It Happen ✨
               </>
             )}
           </Button>
