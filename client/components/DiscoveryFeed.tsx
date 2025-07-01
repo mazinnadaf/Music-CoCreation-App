@@ -158,12 +158,8 @@ export default function DiscoveryFeed() {
       </div>
 
       {/* Filters - Mobile horizontal scroll */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="w-full"
-      >
-        <div className="flex space-x-2 pb-2">
+      <div className="w-full overflow-x-auto scrollbar-hide">
+        <div className="flex space-x-2 pb-2 min-w-max px-1">
           {[
             { key: "all", label: "All" },
             { key: "tracks", label: "Tracks" },
@@ -185,7 +181,7 @@ export default function DiscoveryFeed() {
             </Button>
           ))}
         </div>
-      </ScrollView>
+      </div>
 
       {/* Feed */}
       <div className="grid gap-4">

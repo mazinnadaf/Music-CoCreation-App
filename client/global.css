@@ -130,6 +130,29 @@
     animation: wave 2s ease-in-out infinite;
   }
 
+  /* Mobile optimizations */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Touch optimizations */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
   @keyframes wave {
     0%,
     100% {
