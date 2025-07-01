@@ -11,7 +11,6 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
 
   const navigation = [
-    { name: "Create", href: "/", icon: Home },
     { name: "Discover", href: "/discover", icon: Search },
     { name: "Profile", href: "/profile", icon: User },
   ];
@@ -42,35 +41,48 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* Mobile Bottom Navigation - Contained within app frame */}
         <nav className="flex-shrink-0 bg-card/95 backdrop-blur-lg border-t border-border safe-area-bottom z-50">
-          <div className="flex justify-around items-center py-1.5 px-3">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`flex flex-col items-center justify-center py-2 px-2 rounded-lg transition-all duration-200 active:scale-95 ${
-                    isActive
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground active:bg-muted/20"
-                  }`}
-                >
-                  <Icon
-                    className={`h-5 w-5 mb-1 ${isActive ? "animate-pulse-slow" : ""}`}
-                  />
-                  <span className="text-xs font-medium">{item.name}</span>
-                </Link>
-              );
-            })}
-
-            {/* Floating Action Button */}
-            <Button
-              size="sm"
-              className="gradient-primary border-0 rounded-full w-10 h-10 p-0 shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95"
+          <div className="flex items-center justify-between py-1.5 px-6">
+            {/* Discover Tab */}
+            <Link
+              to="/discover"
+              className={`flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 active:scale-95 ${
+                location.pathname === "/discover"
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground active:bg-muted/20"
+              }`}
             >
-              <Plus className="h-4 w-4" />
-            </Button>
+              <Search
+                className={`h-5 w-5 mb-1 ${location.pathname === "/discover" ? "animate-pulse-slow" : ""}`}
+              />
+              <span className="text-xs font-medium">Discover</span>
+            </Link>
+
+            {/* Central Create Button */}
+            <Link to="/">
+              <Button
+                size="sm"
+                className={`gradient-primary border-0 rounded-full w-12 h-12 p-0 shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 ${
+                  location.pathname === "/" ? "ring-2 ring-primary/50" : ""
+                }`}
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            </Link>
+
+            {/* Profile Tab */}
+            <Link
+              to="/profile"
+              className={`flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-all duration-200 active:scale-95 ${
+                location.pathname === "/profile"
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground active:bg-muted/20"
+              }`}
+            >
+              <User
+                className={`h-5 w-5 mb-1 ${location.pathname === "/profile" ? "animate-pulse-slow" : ""}`}
+              />
+              <span className="text-xs font-medium">Profile</span>
+            </Link>
           </div>
         </nav>
       </div>
