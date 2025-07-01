@@ -79,14 +79,13 @@ export default function CreateLayer() {
 
   return (
     <div className="w-full px-4 py-6 space-y-6">
-      {/* Header - Mobile optimized */}
+      {/* Header - Consumer friendly */}
       <div className="text-center space-y-3">
         <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight">
-          Create Your Next Hit
+          What's your vibe?
         </h1>
         <p className="text-base text-muted-foreground px-2 leading-relaxed">
-          Start with a single layer and build your masterpiece. No experience
-          needed.
+          Just describe the sound in your head and watch the magic happen ✨
         </p>
       </div>
 
@@ -95,13 +94,13 @@ export default function CreateLayer() {
         <div className="space-y-4">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Sparkles className="h-4 w-4" />
-            <span>Describe the sound you want to create</span>
+            <span>Describe your sound</span>
           </div>
 
           <Textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="a dreamy synth melody inspired by Tame Impala, 120 BPM"
+            placeholder="Something that sounds like..."
             className="min-h-[120px] text-base leading-relaxed bg-background/50 border-border focus:border-primary/50 rounded-xl p-4 resize-none"
             style={{
               fontSize: "16px", // Prevent zoom on iOS
@@ -111,9 +110,9 @@ export default function CreateLayer() {
 
           {/* Suggested Prompts - Mobile stacked */}
           {showSuggestion && layers.length === 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <span className="text-sm text-muted-foreground block">
-                Try these:
+                💡 Or try one of these vibes:
               </span>
               <div className="grid gap-2">
                 {SUGGESTED_PROMPTS.slice(1, 4).map((suggestion, i) => (
@@ -124,6 +123,9 @@ export default function CreateLayer() {
                     onClick={() => suggestPrompt(suggestion)}
                     className="text-sm p-3 h-auto text-left justify-start border-border hover:border-primary/50 active:scale-[0.98] transition-transform"
                   >
+                    <span className="text-lg mr-2">
+                      {i === 0 ? "🥁" : i === 1 ? "🎸" : "☁️"}
+                    </span>
                     {suggestion}
                   </Button>
                 ))}
