@@ -18,57 +18,29 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
+      {/* Mobile Header - Simplified */}
+      <header className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50 safe-area-top">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-center">
+            {/* Centered Logo for Mobile */}
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                <Music className="h-5 w-5 text-white" />
+              <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center">
+                <Music className="h-4 w-4 text-white" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <span className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 SyncFlow
               </span>
             </Link>
-
-            {/* Navigation */}
-            <nav className="hidden md:flex space-x-4">
-              {navigation.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* CTA Button */}
-            <Button className="gradient-primary border-0">
-              <Plus className="h-4 w-4 mr-2" />
-              New Track
-            </Button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1">{children}</main>
+      {/* Main Content with mobile padding */}
+      <main className="flex-1 pb-20">{children}</main>
 
-      {/* Mobile Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border">
-        <div className="flex justify-around py-2">
+      {/* Mobile Bottom Navigation - Always visible */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border safe-area-bottom z-50">
+        <div className="flex justify-around items-center py-2 px-4">
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.href;
@@ -76,15 +48,27 @@ export default function Layout({ children }: LayoutProps) {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`flex flex-col items-center space-y-1 p-3 rounded-lg transition-colors ${
-                  isActive ? "text-primary" : "text-muted-foreground"
+                className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 active:scale-95 ${
+                  isActive
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground active:bg-muted/20"
                 }`}
               >
-                <Icon className="h-5 w-5" />
-                <span className="text-xs">{item.name}</span>
+                <Icon
+                  className={`h-6 w-6 mb-1 ${isActive ? "animate-pulse-slow" : ""}`}
+                />
+                <span className="text-xs font-medium">{item.name}</span>
               </Link>
             );
           })}
+
+          {/* Floating Action Button */}
+          <Button
+            size="sm"
+            className="gradient-primary border-0 rounded-full w-12 h-12 p-0 shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95"
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
         </div>
       </nav>
     </div>

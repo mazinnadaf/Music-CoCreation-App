@@ -78,20 +78,20 @@ export default function CreateLayer() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+    <div className="w-full px-4 py-6 space-y-6">
+      {/* Header - Mobile optimized */}
+      <div className="text-center space-y-3">
+        <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight">
           Create Your Next Hit
         </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-base text-muted-foreground px-2 leading-relaxed">
           Start with a single layer and build your masterpiece. No experience
-          needed - just describe what you hear in your head.
+          needed.
         </p>
       </div>
 
-      {/* Creation Interface */}
-      <Card className="gradient-card p-6 border-border">
+      {/* Creation Interface - Mobile optimized */}
+      <Card className="gradient-card p-4 border-border">
         <div className="space-y-4">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Sparkles className="h-4 w-4" />
@@ -102,43 +102,54 @@ export default function CreateLayer() {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="a dreamy synth melody inspired by Tame Impala, 120 BPM"
-            className="min-h-[100px] text-lg bg-background/50 border-border focus:border-primary/50"
+            className="min-h-[120px] text-base leading-relaxed bg-background/50 border-border focus:border-primary/50 rounded-xl p-4 resize-none"
+            style={{
+              fontSize: "16px", // Prevent zoom on iOS
+              lineHeight: "1.5",
+            }}
           />
 
-          {/* Suggested Prompts */}
+          {/* Suggested Prompts - Mobile stacked */}
           {showSuggestion && layers.length === 0 && (
-            <div className="flex flex-wrap gap-2">
-              <span className="text-sm text-muted-foreground">Try:</span>
-              {SUGGESTED_PROMPTS.slice(1, 4).map((suggestion, i) => (
-                <Button
-                  key={i}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => suggestPrompt(suggestion)}
-                  className="text-xs border-border hover:border-primary/50"
-                >
-                  {suggestion}
-                </Button>
-              ))}
+            <div className="space-y-2">
+              <span className="text-sm text-muted-foreground block">
+                Try these:
+              </span>
+              <div className="grid gap-2">
+                {SUGGESTED_PROMPTS.slice(1, 4).map((suggestion, i) => (
+                  <Button
+                    key={i}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => suggestPrompt(suggestion)}
+                    className="text-sm p-3 h-auto text-left justify-start border-border hover:border-primary/50 active:scale-[0.98] transition-transform"
+                  >
+                    {suggestion}
+                  </Button>
+                ))}
+              </div>
             </div>
           )}
 
           {showSuggestion && layers.length === 1 && (
-            <div className="bg-accent/10 border border-accent/20 rounded-lg p-4">
-              <div className="flex items-center space-x-2 text-accent mb-2">
-                <Zap className="h-4 w-4" />
-                <span className="font-medium">
-                  Great start! Every song needs rhythm.
-                </span>
+            <div className="bg-accent/10 border border-accent/20 rounded-xl p-4 space-y-3">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Zap className="h-4 w-4 text-accent" />
+                </div>
+                <div className="space-y-2 flex-1">
+                  <span className="font-medium text-accent block leading-tight">
+                    Great start! Every song needs rhythm.
+                  </span>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Try adding some drums to give your melody a foundation:
+                  </p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                Try adding some drums to give your melody a foundation:
-              </p>
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => suggestPrompt(SUGGESTED_PROMPTS[1])}
-                className="border-accent/20 hover:border-accent/50 text-accent"
+                className="w-full p-3 h-auto text-left justify-start border-accent/20 hover:border-accent/50 text-accent text-sm active:scale-[0.98] transition-transform"
               >
                 {SUGGESTED_PROMPTS[1]}
               </Button>
@@ -148,19 +159,18 @@ export default function CreateLayer() {
           <Button
             onClick={handleCreateLayer}
             disabled={!prompt.trim() || isGenerating}
-            size="lg"
-            className="w-full gradient-primary border-0 hover:scale-[1.02] transition-transform text-lg py-6"
+            className="w-full gradient-primary border-0 active:scale-[0.98] transition-all duration-200 text-lg font-semibold py-4 h-auto rounded-xl shadow-lg disabled:opacity-50"
           >
             {isGenerating ? (
               <>
-                <div className="animate-spin h-5 w-5 mr-2">
+                <div className="animate-spin h-5 w-5 mr-3">
                   <Music className="h-5 w-5" />
                 </div>
                 Creating your layer...
               </>
             ) : (
               <>
-                <Sparkles className="h-5 w-5 mr-2" />
+                <Sparkles className="h-5 w-5 mr-3" />
                 Create Layer
               </>
             )}
@@ -185,28 +195,30 @@ export default function CreateLayer() {
         ))}
       </div>
 
-      {/* Collaboration CTA */}
+      {/* Collaboration CTA - Mobile optimized */}
       {layers.length >= 2 && (
-        <Card className="border-accent/20 bg-accent/5 p-6">
+        <Card className="border-accent/20 bg-accent/5 p-5">
           <div className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
-                <Mic className="h-6 w-6 text-accent" />
+              <div className="w-14 h-14 rounded-full bg-accent/20 flex items-center justify-center">
+                <Mic className="h-7 w-7 text-accent" />
               </div>
             </div>
-            <h3 className="text-xl font-semibold">This is sounding great!</h3>
-            <p className="text-muted-foreground">
+            <h3 className="text-lg font-semibold leading-tight">
+              This is sounding great!
+            </h3>
+            <p className="text-muted-foreground text-sm leading-relaxed px-2">
               Ready to take it to the next level? Share your loop or invite a
               friend to collaborate.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="space-y-3 pt-2">
               <Button
                 variant="outline"
-                className="border-accent/20 hover:border-accent/50"
+                className="w-full border-accent/20 hover:border-accent/50 active:scale-[0.98] transition-transform p-3 h-auto"
               >
                 Share Loop
               </Button>
-              <Button className="gradient-primary border-0">
+              <Button className="w-full gradient-primary border-0 active:scale-[0.98] transition-transform p-3 h-auto font-semibold">
                 Invite Collaborator
               </Button>
             </div>
