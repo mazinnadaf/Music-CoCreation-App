@@ -280,11 +280,11 @@ export default function DiscoveryFeed() {
         ))}
       </div>
 
-      {/* Load More */}
-      <div className="text-center">
+      {/* Load More - Mobile optimized */}
+      <div className="pt-4">
         <Button
           variant="outline"
-          className="border-border hover:border-primary/50"
+          className="w-full border-border hover:border-primary/50 active:scale-[0.98] transition-transform p-3 h-auto"
         >
           Load More Tracks
         </Button>
