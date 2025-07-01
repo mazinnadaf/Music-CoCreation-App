@@ -184,30 +184,32 @@ export default function DiscoveryFeed() {
       </div>
 
       {/* Feed - Mobile optimized spacing */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         {filteredTracks.map((track) => (
           <Card
             key={track.id}
             className="gradient-card p-3 border-border active:border-primary/50 transition-colors"
           >
-            <div className="flex items-start space-x-4">
+            <div className="flex items-start space-x-2">
               {/* Avatar */}
-              <Avatar className="w-12 h-12">
+              <Avatar className="w-8 h-8">
                 <AvatarImage src="" />
-                <AvatarFallback className="gradient-primary text-white font-semibold">
+                <AvatarFallback className="gradient-primary text-white font-medium text-xs">
                   {track.avatar}
                 </AvatarFallback>
               </Avatar>
 
               {/* Content */}
-              <div className="flex-1 space-y-3">
+              <div className="flex-1 space-y-2">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-semibold text-lg">{track.title}</h3>
+                    <div className="flex items-start flex-wrap gap-1">
+                      <h3 className="font-medium text-sm leading-tight">
+                        {track.title}
+                      </h3>
                       <Badge
                         variant="outline"
-                        className={`${getTypeColor(track.type)} text-xs`}
+                        className={`${getTypeColor(track.type)} text-xs px-1.5 py-0.5`}
                       >
                         {getTypeIcon(track.type)}
                         <span className="ml-1 capitalize">{track.type}</span>
@@ -215,17 +217,17 @@ export default function DiscoveryFeed() {
                       {track.isOpen && (
                         <Badge
                           variant="outline"
-                          className="bg-green-500/20 text-green-400 border-green-500/30 text-xs"
+                          className="bg-green-500/20 text-green-400 border-green-500/30 text-xs px-1.5 py-0.5"
                         >
                           Open
                         </Badge>
                       )}
                     </div>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-xs leading-tight">
                       by {track.artist} • {track.genre} • {track.duration}
                     </p>
                     {track.description && (
-                      <p className="text-sm text-foreground/80 mt-2">
+                      <p className="text-xs text-foreground/80 leading-tight">
                         {track.description}
                       </p>
                     )}
@@ -234,20 +236,27 @@ export default function DiscoveryFeed() {
 
                 {/* Actions */}
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <Button size="sm" className="gradient-primary border-0">
-                      <Play className="h-4 w-4 mr-2" />
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      size="sm"
+                      className="gradient-primary border-0 text-xs py-1.5 px-2.5"
+                    >
+                      <Play className="h-3 w-3 mr-1.5" />
                       Play
                     </Button>
                     {track.isOpen && (
-                      <Button size="sm" variant="outline">
-                        <Plus className="h-4 w-4 mr-2" />
-                        {track.type === "collaboration" ? "Join" : "Use Stem"}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs py-1.5 px-2.5"
+                      >
+                        <Plus className="h-3 w-3 mr-1.5" />
+                        {track.type === "collaboration" ? "Join" : "Use"}
                       </Button>
                     )}
                   </div>
 
-                  <div className="flex items-center space-x-3 text-sm text-muted-foreground">
+                  <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                     <button
                       onClick={() => toggleLike(track.id)}
                       className={`flex items-center space-x-1 hover:text-red-400 transition-colors ${
@@ -255,7 +264,7 @@ export default function DiscoveryFeed() {
                       }`}
                     >
                       <Heart
-                        className={`h-4 w-4 ${
+                        className={`h-3 w-3 ${
                           likedTracks.has(track.id) ? "fill-current" : ""
                         }`}
                       />
@@ -264,13 +273,13 @@ export default function DiscoveryFeed() {
 
                     {track.collaborators > 0 && (
                       <div className="flex items-center space-x-1">
-                        <Users className="h-4 w-4" />
+                        <Users className="h-3 w-3" />
                         <span>{track.collaborators}</span>
                       </div>
                     )}
 
                     <button className="flex items-center space-x-1 hover:text-foreground transition-colors">
-                      <Share className="h-4 w-4" />
+                      <Share className="h-3 w-3" />
                     </button>
                   </div>
                 </div>
