@@ -36,37 +36,40 @@ export default function AudioPlayer({
 
   if (isLoading) {
     return (
-      <div className="gradient-card p-6 rounded-xl border border-border">
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-lg bg-primary/20 animate-pulse-slow flex items-center justify-center">
-            <Volume2 className="h-6 w-6 text-primary" />
+      <div className="gradient-card p-4 rounded-xl border border-border">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 rounded-xl bg-primary/20 animate-pulse-slow flex items-center justify-center">
+            <Volume2 className="h-5 w-5 text-primary" />
           </div>
-          <div className="flex-1">
-            <div className="h-4 bg-muted rounded animate-pulse mb-2"></div>
-            <div className="h-3 bg-muted/50 rounded w-2/3 animate-pulse"></div>
+          <div className="flex-1 space-y-2">
+            <div className="h-3 bg-muted rounded animate-pulse"></div>
+            <div className="h-2 bg-muted/50 rounded w-2/3 animate-pulse"></div>
           </div>
         </div>
-        <div className="mt-4 flex space-x-1">
-          {Array.from({ length: 50 }).map((_, i) => (
+        <div className="mt-3 flex space-x-0.5 h-12">
+          {Array.from({ length: 40 }).map((_, i) => (
             <div
               key={i}
               className="flex-1 bg-muted animate-pulse rounded-sm"
-              style={{ height: `${Math.random() * 40 + 10}px` }}
+              style={{
+                height: `${Math.random() * 100 + 20}%`,
+                animationDelay: `${i * 0.02}s`,
+              }}
             />
           ))}
         </div>
+        <div className="mt-3 h-2 bg-muted rounded-full animate-pulse"></div>
       </div>
     );
   }
 
   return (
-    <div className="gradient-card p-6 rounded-xl border border-border hover:border-primary/50 transition-colors">
+    <div className="gradient-card p-4 rounded-xl border border-border active:border-primary/50 transition-colors">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <Button
             onClick={onPlayPause}
-            size="lg"
-            className="w-12 h-12 rounded-xl gradient-primary border-0 hover:scale-105 transition-transform"
+            className="w-12 h-12 rounded-xl gradient-primary border-0 active:scale-95 transition-all duration-200 shadow-md"
           >
             {isPlaying ? (
               <Pause className="h-5 w-5" />
@@ -74,18 +77,22 @@ export default function AudioPlayer({
               <Play className="h-5 w-5 ml-0.5" />
             )}
           </Button>
-          <div>
-            <h3 className="font-semibold text-foreground">{layerName}</h3>
-            <p className="text-sm text-muted-foreground">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-foreground text-sm leading-tight truncate">
+              {layerName}
+            </h3>
+            <p className="text-xs text-muted-foreground">
               {Math.floor(currentTime)}s / {duration}s
             </p>
           </div>
         </div>
-        <Volume2 className="h-5 w-5 text-muted-foreground" />
+        <Button variant="ghost" size="sm" className="w-8 h-8 p-0 rounded-lg">
+          <Volume2 className="h-4 w-4 text-muted-foreground" />
+        </Button>
       </div>
 
-      {/* Waveform Visualization */}
-      <div className="flex items-end space-x-1 h-16">
+      {/* Waveform Visualization - Mobile optimized */}
+      <div className="flex items-end space-x-0.5 h-12 mb-3">
         {waveformBars.map((bar, i) => (
           <div
             key={i}
@@ -95,17 +102,26 @@ export default function AudioPlayer({
                 : "bg-muted"
             }`}
             style={{
-              height: `${bar.height * 100}%`,
+              height: `${Math.max(bar.height * 100, 8)}%`,
               opacity: bar.isActive ? 1 : 0.6,
             }}
           />
         ))}
       </div>
 
-      {/* Progress Bar */}
-      <div className="mt-4 w-full bg-muted rounded-full h-1">
+      {/* Progress Bar - Larger touch target */}
+      <div
+        className="w-full bg-muted rounded-full h-2 cursor-pointer"
+        onClick={(e) => {
+          // Add click-to-seek functionality
+          const rect = e.currentTarget.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const percentage = clickX / rect.width;
+          // Would update currentTime here
+        }}
+      >
         <div
-          className="bg-gradient-to-r from-primary to-accent h-1 rounded-full transition-all duration-100"
+          className="bg-gradient-to-r from-primary to-accent h-2 rounded-full transition-all duration-100"
           style={{ width: `${(currentTime / duration) * 100}%` }}
         />
       </div>

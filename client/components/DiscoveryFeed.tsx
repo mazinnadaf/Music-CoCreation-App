@@ -142,44 +142,50 @@ export default function DiscoveryFeed() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Discover</h1>
-          <p className="text-muted-foreground">
-            Find your next collaboration or inspiration
-          </p>
+    <div className="w-full px-4 py-6 space-y-5">
+      {/* Header - Mobile optimized */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Discover</h1>
+          <div className="flex items-center space-x-1.5">
+            <TrendingUp className="h-4 w-4 text-accent" />
+            <span className="text-xs text-accent font-medium">Trending</span>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <TrendingUp className="h-5 w-5 text-accent" />
-          <span className="text-sm text-accent font-medium">Trending Now</span>
-        </div>
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          Find your next collaboration or inspiration
+        </p>
       </div>
 
-      {/* Filters */}
-      <div className="flex space-x-2">
-        {[
-          { key: "all", label: "All" },
-          { key: "tracks", label: "Finished Tracks" },
-          { key: "stems", label: "Open Stems" },
-          { key: "collabs", label: "Collaborations" },
-        ].map((filterOption) => (
-          <Button
-            key={filterOption.key}
-            variant={filter === filterOption.key ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter(filterOption.key as typeof filter)}
-            className={
-              filter === filterOption.key
-                ? "gradient-primary border-0"
-                : "border-border hover:border-primary/50"
-            }
-          >
-            {filterOption.label}
-          </Button>
-        ))}
-      </div>
+      {/* Filters - Mobile horizontal scroll */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="w-full"
+      >
+        <div className="flex space-x-2 pb-2">
+          {[
+            { key: "all", label: "All" },
+            { key: "tracks", label: "Tracks" },
+            { key: "stems", label: "Stems" },
+            { key: "collabs", label: "Collabs" },
+          ].map((filterOption) => (
+            <Button
+              key={filterOption.key}
+              variant={filter === filterOption.key ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter(filterOption.key as typeof filter)}
+              className={`whitespace-nowrap active:scale-95 transition-transform ${
+                filter === filterOption.key
+                  ? "gradient-primary border-0 shadow-md"
+                  : "border-border hover:border-primary/50"
+              }`}
+            >
+              {filterOption.label}
+            </Button>
+          ))}
+        </div>
+      </ScrollView>
 
       {/* Feed */}
       <div className="grid gap-4">
