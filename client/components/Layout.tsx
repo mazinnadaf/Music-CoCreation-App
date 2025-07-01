@@ -19,7 +19,7 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile App Container */}
-      <div className="max-w-sm mx-auto bg-background min-h-screen relative overflow-hidden border-x border-border shadow-2xl">
+      <div className="max-w-sm mx-auto bg-background h-[700px] relative overflow-hidden border-x border-border shadow-2xl flex flex-col">
         {/* Mobile Header - Simplified */}
         <header className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50 safe-area-top">
           <div className="px-4 py-3">
@@ -38,10 +38,10 @@ export default function Layout({ children }: LayoutProps) {
         </header>
 
         {/* Main Content with mobile padding */}
-        <main className="flex-1 pb-16">{children}</main>
+        <main className="flex-1 overflow-y-auto">{children}</main>
 
         {/* Mobile Bottom Navigation - Contained within app frame */}
-        <nav className="absolute bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border safe-area-bottom z-50">
+        <nav className="flex-shrink-0 bg-card/95 backdrop-blur-lg border-t border-border safe-area-bottom z-50">
           <div className="flex justify-around items-center py-2 px-3">
             {navigation.map((item) => {
               const Icon = item.icon;

@@ -86,8 +86,8 @@ export default function AudioPlayer({
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" className="w-8 h-8 p-0 rounded-lg">
-          <Volume2 className="h-4 w-4 text-muted-foreground" />
+        <Button variant="ghost" size="sm" className="w-6 h-6 p-0 rounded-md">
+          <Volume2 className="h-3 w-3 text-muted-foreground" />
         </Button>
       </div>
 

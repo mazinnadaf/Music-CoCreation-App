@@ -78,13 +78,13 @@ export default function CreateLayer() {
   };
 
   return (
-    <div className="w-full px-3 py-4 space-y-4">
+    <div className="w-full px-3 py-3 space-y-3 min-h-full">
       {/* Header - Consumer friendly */}
-      <div className="text-center space-y-3">
-        <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight">
+      <div className="text-center space-y-2">
+        <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight">
           What's your vibe?
         </h1>
-        <p className="text-sm text-muted-foreground px-1 leading-relaxed">
+        <p className="text-xs text-muted-foreground px-1 leading-relaxed">
           Just describe the sound in your head and watch the magic happen ✨
         </p>
       </div>
@@ -121,7 +121,7 @@ export default function CreateLayer() {
                     variant="outline"
                     size="sm"
                     onClick={() => suggestPrompt(suggestion)}
-                    className="text-sm p-3 h-auto text-left justify-start border-border hover:border-primary/50 active:scale-[0.98] transition-transform"
+                    className="text-xs p-2.5 h-auto text-left justify-start border-border hover:border-primary/50 active:scale-[0.98] transition-transform"
                   >
                     <span className="text-lg mr-2">
                       {i === 0 ? "🥁" : i === 1 ? "🎸" : "☁️"}
@@ -151,7 +151,7 @@ export default function CreateLayer() {
               <Button
                 variant="outline"
                 onClick={() => suggestPrompt(SUGGESTED_PROMPTS[1])}
-                className="w-full p-3 h-auto text-left justify-start border-accent/20 hover:border-accent/50 text-accent text-sm active:scale-[0.98] transition-transform"
+                className="w-full p-2.5 h-auto text-left justify-start border-accent/20 hover:border-accent/50 text-accent text-xs active:scale-[0.98] transition-transform"
               >
                 {SUGGESTED_PROMPTS[1]}
               </Button>
@@ -161,7 +161,7 @@ export default function CreateLayer() {
           <Button
             onClick={handleCreateLayer}
             disabled={!prompt.trim() || isGenerating}
-            className="w-full gradient-primary border-0 active:scale-[0.98] transition-all duration-200 text-base font-semibold py-3 h-auto rounded-lg shadow-lg disabled:opacity-50"
+            className="w-full gradient-primary border-0 active:scale-[0.98] transition-all duration-200 text-sm font-semibold py-2.5 h-auto rounded-lg shadow-lg disabled:opacity-50"
           >
             {isGenerating ? (
               <>
@@ -216,12 +216,12 @@ export default function CreateLayer() {
             <div className="space-y-3 pt-2">
               <Button
                 variant="outline"
-                className="w-full border-accent/20 hover:border-accent/50 active:scale-[0.98] transition-transform p-3 h-auto"
+                className="w-full border-accent/20 hover:border-accent/50 active:scale-[0.98] transition-transform p-2.5 h-auto text-xs"
               >
                 <span className="mr-2">📱</span>
                 Share Your Track
               </Button>
-              <Button className="w-full gradient-primary border-0 active:scale-[0.98] transition-transform p-3 h-auto font-semibold">
+              <Button className="w-full gradient-primary border-0 active:scale-[0.98] transition-transform p-2.5 h-auto font-semibold text-xs">
                 <span className="mr-2">👯</span>
                 Invite a Friend
               </Button>

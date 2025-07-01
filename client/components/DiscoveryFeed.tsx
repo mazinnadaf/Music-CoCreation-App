@@ -142,7 +142,7 @@ export default function DiscoveryFeed() {
   };
 
   return (
-    <div className="w-full px-3 py-4 space-y-4">
+    <div className="w-full px-3 py-3 space-y-3 min-h-full">
       {/* Header - Mobile optimized */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -284,7 +284,7 @@ export default function DiscoveryFeed() {
       <div className="pt-4">
         <Button
           variant="outline"
-          className="w-full border-border hover:border-primary/50 active:scale-[0.98] transition-transform p-3 h-auto"
+          className="w-full border-border hover:border-primary/50 active:scale-[0.98] transition-transform p-2.5 h-auto text-xs"
         >
           Load More Tracks
         </Button>
