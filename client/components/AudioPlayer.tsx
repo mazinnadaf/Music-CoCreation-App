@@ -64,21 +64,21 @@ export default function AudioPlayer({
   }
 
   return (
-    <div className="gradient-card p-4 rounded-xl border border-border active:border-primary/50 transition-colors">
+    <div className="gradient-card p-3 rounded-lg border border-border active:border-primary/50 transition-colors">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <Button
             onClick={onPlayPause}
-            className="w-12 h-12 rounded-xl gradient-primary border-0 active:scale-95 transition-all duration-200 shadow-md"
+            className="w-10 h-10 rounded-lg gradient-primary border-0 active:scale-95 transition-all duration-200 shadow-md"
           >
             {isPlaying ? (
-              <Pause className="h-5 w-5" />
+              <Pause className="h-4 w-4" />
             ) : (
-              <Play className="h-5 w-5 ml-0.5" />
+              <Play className="h-4 w-4 ml-0.5" />
             )}
           </Button>
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-foreground text-sm leading-tight truncate">
+            <h3 className="font-medium text-foreground text-xs leading-tight truncate">
               {layerName}
             </h3>
             <p className="text-xs text-muted-foreground">

@@ -78,19 +78,19 @@ export default function CreateLayer() {
   };
 
   return (
-    <div className="w-full px-4 py-6 space-y-6">
+    <div className="w-full px-3 py-4 space-y-4">
       {/* Header - Consumer friendly */}
       <div className="text-center space-y-3">
-        <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight">
+        <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight">
           What's your vibe?
         </h1>
-        <p className="text-base text-muted-foreground px-2 leading-relaxed">
+        <p className="text-sm text-muted-foreground px-1 leading-relaxed">
           Just describe the sound in your head and watch the magic happen ✨
         </p>
       </div>
 
       {/* Creation Interface - Mobile optimized */}
-      <Card className="gradient-card p-4 border-border">
+      <Card className="gradient-card p-3 border-border">
         <div className="space-y-4">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Sparkles className="h-4 w-4" />
@@ -101,7 +101,7 @@ export default function CreateLayer() {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Something that sounds like..."
-            className="min-h-[120px] text-base leading-relaxed bg-background/50 border-border focus:border-primary/50 rounded-xl p-4 resize-none"
+            className="min-h-[80px] text-sm leading-relaxed bg-background/50 border-border focus:border-primary/50 rounded-lg p-3 resize-none"
             style={{
               fontSize: "16px", // Prevent zoom on iOS
               lineHeight: "1.5",
@@ -161,7 +161,7 @@ export default function CreateLayer() {
           <Button
             onClick={handleCreateLayer}
             disabled={!prompt.trim() || isGenerating}
-            className="w-full gradient-primary border-0 active:scale-[0.98] transition-all duration-200 text-lg font-semibold py-4 h-auto rounded-xl shadow-lg disabled:opacity-50"
+            className="w-full gradient-primary border-0 active:scale-[0.98] transition-all duration-200 text-base font-semibold py-3 h-auto rounded-lg shadow-lg disabled:opacity-50"
           >
             {isGenerating ? (
               <>
