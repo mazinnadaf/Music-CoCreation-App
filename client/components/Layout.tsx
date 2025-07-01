@@ -38,11 +38,11 @@ export default function Layout({ children }: LayoutProps) {
         </header>
 
         {/* Main Content with mobile padding */}
-        <main className="flex-1 pb-20">{children}</main>
+        <main className="flex-1 pb-16">{children}</main>
 
-        {/* Mobile Bottom Navigation - Always visible */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border safe-area-bottom z-50">
-          <div className="flex justify-around items-center py-2 px-4">
+        {/* Mobile Bottom Navigation - Contained within app frame */}
+        <nav className="absolute bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border safe-area-bottom z-50">
+          <div className="flex justify-around items-center py-2 px-3">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
@@ -50,14 +50,14 @@ export default function Layout({ children }: LayoutProps) {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 active:scale-95 ${
+                  className={`flex flex-col items-center justify-center py-2 px-2 rounded-lg transition-all duration-200 active:scale-95 ${
                     isActive
                       ? "text-primary bg-primary/10"
                       : "text-muted-foreground active:bg-muted/20"
                   }`}
                 >
                   <Icon
-                    className={`h-6 w-6 mb-1 ${isActive ? "animate-pulse-slow" : ""}`}
+                    className={`h-5 w-5 mb-1 ${isActive ? "animate-pulse-slow" : ""}`}
                   />
                   <span className="text-xs font-medium">{item.name}</span>
                 </Link>
@@ -67,9 +67,9 @@ export default function Layout({ children }: LayoutProps) {
             {/* Floating Action Button */}
             <Button
               size="sm"
-              className="gradient-primary border-0 rounded-full w-12 h-12 p-0 shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95"
+              className="gradient-primary border-0 rounded-full w-10 h-10 p-0 shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
             </Button>
           </div>
         </nav>

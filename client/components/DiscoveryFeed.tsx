@@ -142,17 +142,17 @@ export default function DiscoveryFeed() {
   };
 
   return (
-    <div className="w-full px-4 py-6 space-y-5">
+    <div className="w-full px-3 py-4 space-y-4">
       {/* Header - Mobile optimized */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Discover</h1>
+          <h1 className="text-xl font-bold">Discover</h1>
           <div className="flex items-center space-x-1.5">
             <TrendingUp className="h-4 w-4 text-accent" />
             <span className="text-xs text-accent font-medium">Trending</span>
           </div>
         </div>
-        <p className="text-muted-foreground text-sm leading-relaxed">
+        <p className="text-muted-foreground text-xs leading-relaxed">
           Find your next collaboration or inspiration
         </p>
       </div>
@@ -188,7 +188,7 @@ export default function DiscoveryFeed() {
         {filteredTracks.map((track) => (
           <Card
             key={track.id}
-            className="gradient-card p-4 border-border active:border-primary/50 transition-colors"
+            className="gradient-card p-3 border-border active:border-primary/50 transition-colors"
           >
             <div className="flex items-start space-x-4">
               {/* Avatar */}
