@@ -78,9 +78,9 @@ export default function CreateLayer() {
   };
 
   return (
-    <div className="w-full px-3 py-3 space-y-3 min-h-full">
+    <div className="w-full px-3 py-2 space-y-2 min-h-full">
       {/* Header - Consumer friendly */}
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-1">
         <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight">
           What's your vibe?
         </h1>

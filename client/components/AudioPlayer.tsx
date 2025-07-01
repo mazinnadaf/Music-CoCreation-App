@@ -65,7 +65,7 @@ export default function AudioPlayer({
 
   return (
     <div className="gradient-card p-3 rounded-lg border border-border active:border-primary/50 transition-colors">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-3">
           <Button
             onClick={onPlayPause}
@@ -92,7 +92,7 @@ export default function AudioPlayer({
       </div>
 
       {/* Waveform Visualization - Mobile optimized */}
-      <div className="flex items-end space-x-0.5 h-12 mb-3">
+      <div className="flex items-end space-x-0.5 h-10 mb-2">
         {waveformBars.map((bar, i) => (
           <div
             key={i}

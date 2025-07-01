@@ -142,7 +142,7 @@ export default function DiscoveryFeed() {
   };
 
   return (
-    <div className="w-full px-3 py-3 space-y-3 min-h-full">
+    <div className="w-full px-3 py-2 space-y-2 min-h-full">
       {/* Header - Mobile optimized */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">

@@ -5,7 +5,7 @@ import { User, Music, Users, Award } from "lucide-react";
 export default function Profile() {
   return (
     <Layout>
-      <div className="w-full px-3 py-3 space-y-3 min-h-full">
+      <div className="w-full px-3 py-2 space-y-2 min-h-full">
         <Card className="gradient-card p-3 border-border text-center">
           <div className="w-16 h-16 rounded-full gradient-primary mx-auto mb-3 flex items-center justify-center">
             <User className="h-8 w-8 text-white" />
