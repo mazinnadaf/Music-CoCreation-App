@@ -149,7 +149,7 @@ struct WaveformView: View {
                 let isActive = progress > barProgress
                 
                 RoundedRectangle(cornerRadius: 1)
-                    .fill(isActive ? LinearGradient.primaryGradient : Color.borderColor.gradient)
+                    .fill(isActive ? AnyShapeStyle(LinearGradient.primaryGradient) : AnyShapeStyle(Color.borderColor))
                     .frame(height: CGFloat(amplitude * 60))
                     .opacity(isActive ? 1.0 : 0.6)
                     .scaleEffect(isPlaying && isActive ? 1.1 : 1.0)

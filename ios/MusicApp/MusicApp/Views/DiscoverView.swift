@@ -125,7 +125,15 @@ struct FilterButton: View {
                 .fontWeight(.medium)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(isSelected ? LinearGradient.primaryGradient : Color.cardBackground.gradient)
+                .background(
+                    Group {
+                        if isSelected {
+                            LinearGradient.primaryGradient
+                        } else {
+                            Color.cardBackground
+                        }
+                    }
+                )
                 .foregroundColor(isSelected ? .white : .secondaryText)
                 .cornerRadius(20)
                 .overlay(
