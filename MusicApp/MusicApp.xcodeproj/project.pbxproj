@@ -35,16 +35,6 @@
 			path = MusicApp;
 			sourceTree = "<group>";
 		};
-		1E9C77572E2318070055EB87 /* MusicAppTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = MusicAppTests;
-			sourceTree = "<group>";
-		};
-		1E9C77612E2318070055EB87 /* MusicAppUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = MusicAppUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,8 +66,6 @@
 			isa = PBXGroup;
 			children = (
 				1E9C77492E2318050055EB87 /* MusicApp */,
-				1E9C77572E2318070055EB87 /* MusicAppTests */,
-				1E9C77612E2318070055EB87 /* MusicAppUITests */,
 				1E9C77482E2318050055EB87 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -130,9 +118,6 @@
 			dependencies = (
 				1E9C77562E2318070055EB87 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				1E9C77572E2318070055EB87 /* MusicAppTests */,
-			);
 			name = MusicAppTests;
 			packageProductDependencies = (
 			);
@@ -152,9 +137,6 @@
 			);
 			dependencies = (
 				1E9C77602E2318070055EB87 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				1E9C77612E2318070055EB87 /* MusicAppUITests */,
 			);
 			name = MusicAppUITests;
 			packageProductDependencies = (
