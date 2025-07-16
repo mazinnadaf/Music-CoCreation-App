@@ -1,18 +1,58 @@
 import SwiftUI
 import Combine
 
-struct Layer: Identifiable {
-    let id = UUID()
+struct Layer: Identifiable, Codable {
+    let id: UUID
     let name: String
     let prompt: String
     var isPlaying: Bool = false
     let duration: TimeInterval = 30.0
     var currentTime: TimeInterval = 0.0
     let waveformData: [Float]
+    let creatorId: UUID?
+    let creatorName: String?
+    let bpm: Int
+    let key: String?
+    let instrument: InstrumentType
+    var volume: Float = 0.8
+    var isMuted: Bool = false
+    var isSolo: Bool = false
+    let createdAt: Date
+    var isPublic: Bool = false
+    var useCount: Int = 0
     
-    init(name: String, prompt: String) {
+    enum InstrumentType: String, Codable, CaseIterable {
+        case drums = "Drums"
+        case bass = "Bass"
+        case melody = "Melody"
+        case vocals = "Vocals"
+        case pads = "Pads"
+        case fx = "FX"
+        case other = "Other"
+        
+        var icon: String {
+            switch self {
+            case .drums: return "metronome"
+            case .bass: return "waveform"
+            case .melody: return "music.note"
+            case .vocals: return "mic"
+            case .pads: return "pianokeys"
+            case .fx: return "sparkles"
+            case .other: return "music.quarternote.3"
+            }
+        }
+    }
+    
+    init(name: String, prompt: String, bpm: Int = 120, instrument: InstrumentType = .other, creatorId: UUID? = nil, creatorName: String? = nil) {
+        self.id = UUID()
         self.name = name
         self.prompt = prompt
+        self.bpm = bpm
+        self.key = nil
+        self.instrument = instrument
+        self.creatorId = creatorId
+        self.creatorName = creatorName
+        self.createdAt = Date()
         // Generate fake waveform data
         self.waveformData = (0..<50).map { i in
             sin(Float(i) * 0.2) * 0.5 + 0.5 + Float.random(in: 0...0.3)
@@ -20,8 +60,8 @@ struct Layer: Identifiable {
     }
 }
 
-struct Track: Identifiable {
-    let id = UUID()
+struct Track: Identifiable, Codable {
+    let id: UUID
     let title: String
     let artist: String
     let avatar: String
@@ -33,7 +73,21 @@ struct Track: Identifiable {
     let type: TrackType
     let description: String?
     
-    enum TrackType: String, CaseIterable {
+    init(title: String, artist: String, avatar: String, genre: String, duration: String, likes: Int, collaborators: Int, isOpen: Bool, type: TrackType, description: String?) {
+        self.id = UUID()
+        self.title = title
+        self.artist = artist
+        self.avatar = avatar
+        self.genre = genre
+        self.duration = duration
+        self.likes = likes
+        self.collaborators = collaborators
+        self.isOpen = isOpen
+        self.type = type
+        self.description = description
+    }
+    
+    enum TrackType: String, CaseIterable, Codable {
         case track = "track"
         case stem = "stem"
         case collaboration = "collaboration"

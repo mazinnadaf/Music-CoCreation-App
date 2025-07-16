@@ -61,6 +61,42 @@ struct MockData {
             isOpen: true,
             type: .stem,
             description: "Perfect foundation for a chill jazz track"
+        ),
+        Track(
+            title: "Electric Summer",
+            artist: "DJ Voltage",
+            avatar: "DV",
+            genre: "Electronic",
+            duration: "3:45",
+            likes: 892,
+            collaborators: 4,
+            isOpen: false,
+            type: .track,
+            description: nil
+        ),
+        Track(
+            title: "Trap Beat Foundation",
+            artist: "808 Master",
+            avatar: "8M",
+            genre: "Trap",
+            duration: "0:24",
+            likes: 156,
+            collaborators: 0,
+            isOpen: true,
+            type: .stem,
+            description: "Hard-hitting 808s ready for your melody"
+        ),
+        Track(
+            title: "Need a Guitar Solo",
+            artist: "Rock Revival",
+            avatar: "RR",
+            genre: "Rock",
+            duration: "2:15",
+            likes: 234,
+            collaborators: 1,
+            isOpen: true,
+            type: .collaboration,
+            description: "Classic rock track missing that epic guitar solo"
         )
     ]
 }

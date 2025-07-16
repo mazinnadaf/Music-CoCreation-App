@@ -1,61 +1,75 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @EnvironmentObject var authManager: AuthenticationManager
+    @State private var selectedTab: ProfileTab = .overview
+    @State private var showEditProfile = false
+    @State private var showSettings = false
+    
+    enum ProfileTab: String, CaseIterable {
+        case overview = "Overview"
+        case tracks = "Tracks"
+        case collaborations = "Collabs"
+        case badges = "Badges"
+        
+        var icon: String {
+            switch self {
+            case .overview: return "person.fill"
+            case .tracks: return "music.note.list"
+            case .collaborations: return "person.2.fill"
+            case .badges: return "trophy.fill"
+            }
+        }
+    }
+    
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: 0) {
                     // Profile Header
-                    VStack(spacing: 16) {
-                        Circle()
-                            .fill(LinearGradient.primaryGradient)
-                            .frame(width: 96, height: 96)
-                            .overlay(
-                                Image(systemName: "person.fill")
-                                    .font(.largeTitle)
-                                    .foregroundColor(.white)
-                            )
-                        
-                        Text("Artist Profile")
-                            .font(.title)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primaryText)
-                        
-                        Text("Your musical identity and collaboration history")
-                            .font(.body)
-                            .foregroundColor(.secondaryText)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(.top)
+                    ProfileHeaderView(user: authManager.currentUser, showEditProfile: $showEditProfile)
                     
-                    // Stats Grid
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 16) {
-                        ProfileStatsCard(
-                            icon: "music.note",
-                            title: "Top Tracks",
-                            subtitle: "Coming Soon",
-                            color: .primaryPurple
-                        )
-                        
-                        ProfileStatsCard(
-                            icon: "person.2.fill",
-                            title: "Collaborations",
-                            subtitle: "Coming Soon",
-                            color: .primaryBlue
-                        )
-                        
-                        ProfileStatsCard(
-                            icon: "trophy.fill",
-                            title: "Achievements",
-                            subtitle: "Coming Soon",
-                            color: .blue
-                        )
+                    // Tab Selector
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 24) {
+                            ForEach(ProfileTab.allCases, id: \.self) { tab in
+                                TabButton(
+                                    title: tab.rawValue,
+                                    icon: tab.icon,
+                                    isSelected: selectedTab == tab,
+                                    action: { selectedTab = tab }
+                                )
+                            }
+                        }
+                        .padding(.horizontal)
                     }
+                    .padding(.vertical)
+                    
+                    // Tab Content
+                    Group {
+                        switch selectedTab {
+                        case .overview:
+                            ProfileOverviewView(user: authManager.currentUser)
+                        case .tracks:
+                            ProfileTracksView()
+                        case .collaborations:
+                            ProfileCollaborationsView()
+                        case .badges:
+                            ProfileBadgesView(user: authManager.currentUser)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 24)
                 }
-                .padding()
             }
             .background(Color.darkBackground)
             .navigationBarHidden(true)
+            .sheet(isPresented: $showEditProfile) {
+                EditProfileView(user: authManager.currentUser)
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
+            }
         }
     }
 }
