@@ -4,6 +4,9 @@ struct DiscoverView: View {
     @State private var selectedFilter: Track.TrackType? = nil
     @State private var likedTracks: Set<UUID> = []
     @State private var tracks: [Track] = MockData.tracks
+    @State private var selectedTrack: Track?
+    @State private var showCollaborationView = false
+    @EnvironmentObject var authManager: AuthenticationManager
     
     var filteredTracks: [Track] {
         if let filter = selectedFilter {
@@ -70,7 +73,10 @@ struct DiscoverView: View {
                                 isLiked: likedTracks.contains(track.id),
                                 onLike: { toggleLike(trackId: track.id) },
                                 onPlay: { /* Handle play */ },
-                                onJoin: { /* Handle join/use stem */ }
+                                onJoin: { track in
+                                    selectedTrack = track
+                                    showCollaborationView = true
+                                }
                             )
                         }
                     }
@@ -95,6 +101,22 @@ struct DiscoverView: View {
             }
             .background(Color.darkBackground)
             .navigationBarHidden(true)
+            .sheet(isPresented: $showCollaborationView) {
+                if let track = selectedTrack {
+                    // Create a collaboration from the track
+                    CollaborationView(
+                        collaboration: Collaboration(
+                            title: track.title,
+                            description: track.description ?? "Join this collaboration to add your unique touch!",
+                            creator: User(username: "creator", artistName: track.artist),
+                            genre: track.genre,
+                            bpm: 120,
+                            key: "C Major"
+                        )
+                    )
+                    .environmentObject(authManager)
+                }
+            }
         }
     }
     

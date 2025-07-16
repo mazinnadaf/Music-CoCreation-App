@@ -19,12 +19,19 @@ struct ContentView: View {
                 }
                 .tag(1)
             
+            MessagesView()
+                .tabItem {
+                    Image(systemName: "bubble.left.and.bubble.right")
+                    Text("Messages")
+                }
+                .tag(2)
+            
             ProfileView()
                 .tabItem {
                     Image(systemName: "person.fill")
                     Text("Profile")
                 }
-                .tag(2)
+                .tag(3)
         }
         .accentColor(Color.purple)
         .environmentObject(audioManager)

@@ -24,7 +24,7 @@ struct RootView: View {
                     insertion: .move(edge: .trailing),
                     removal: .move(edge: .leading)
                 ))
-        case .authenticated(let user):
+        case .authenticated(_):
             if authManager.hasCompletedOnboarding {
                 ContentView()
                     .transition(.asymmetric(

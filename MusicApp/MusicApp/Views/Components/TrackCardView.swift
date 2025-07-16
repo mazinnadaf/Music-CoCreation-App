@@ -5,7 +5,7 @@ struct TrackCardView: View {
     let isLiked: Bool
     let onLike: () -> Void
     let onPlay: () -> Void
-    let onJoin: () -> Void
+    let onJoin: (Track) -> Void
     
     var body: some View {
         VStack(spacing: 16) {
@@ -101,7 +101,7 @@ struct TrackCardView: View {
                         }
                         
                         if track.isOpen {
-                            Button(action: onJoin) {
+                            Button(action: { onJoin(track) }) {
                                 HStack(spacing: 6) {
                                     Image(systemName: "plus")
                                         .font(.caption)
@@ -166,7 +166,7 @@ struct TrackCardView: View {
         isLiked: false,
         onLike: {},
         onPlay: {},
-        onJoin: {}
+        onJoin: { _ in }
     )
     .padding()
     .background(Color.darkBackground)

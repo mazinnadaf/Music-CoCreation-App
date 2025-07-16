@@ -14,6 +14,8 @@ struct User: Identifiable, Codable {
     var badges: [Badge]
     var joinedDate: Date
     var isVerified: Bool
+    var friends: [UUID] // Friend user IDs
+    var starredTracks: [UUID] // Starred track IDs
     
     init(username: String, artistName: String) {
         self.id = UUID()
@@ -27,6 +29,8 @@ struct User: Identifiable, Codable {
         self.badges = []
         self.joinedDate = Date()
         self.isVerified = false
+        self.friends = []
+        self.starredTracks = []
     }
 }
 
@@ -215,6 +219,49 @@ struct Band: Identifiable, Codable {
     }
 }
 
+// MARK: - Message Models
+struct Message: Identifiable, Codable {
+    let id: UUID
+    let senderId: UUID
+    let receiverId: UUID
+    let content: String
+    let timestamp: Date
+    var isRead: Bool
+    let messageType: MessageType
+    
+    enum MessageType: String, Codable {
+        case text = "text"
+        case trackShare = "track_share"
+        case collaborationInvite = "collab_invite"
+    }
+    
+    init(senderId: UUID, receiverId: UUID, content: String, messageType: MessageType = .text) {
+        self.id = UUID()
+        self.senderId = senderId
+        self.receiverId = receiverId
+        self.content = content
+        self.timestamp = Date()
+        self.isRead = false
+        self.messageType = messageType
+    }
+}
+
+struct Conversation: Identifiable, Codable {
+    let id: UUID
+    let participants: [UUID]
+    var messages: [Message]
+    var lastMessage: Message?
+    var unreadCount: Int
+    
+    init(participants: [UUID]) {
+        self.id = UUID()
+        self.participants = participants
+        self.messages = []
+        self.lastMessage = nil
+        self.unreadCount = 0
+    }
+}
+
 // MARK: - Notification Models
 struct AppNotification: Identifiable {
     let id = UUID()
@@ -233,6 +280,8 @@ struct AppNotification: Identifiable {
         case bandInvite = "band_invite"
         case achievement = "achievement"
         case trending = "trending"
+        case newMessage = "new_message"
+        case friendRequest = "friend_request"
     }
 }
 
