@@ -118,6 +118,8 @@ class AudioManager: ObservableObject {
     @Published var isGenerating = false
     @Published var currentPrompt = "a dreamy synth melody inspired by Tame Impala, 120 BPM"
     @Published var showSuggestion = true
+    @Published var selectedInstrument: Layer.InstrumentType = .other
+    @Published var bpm: String = "120"
     
     private var timer: Timer?
     private var players: [UUID: AVPlayer] = [:]
@@ -158,8 +160,17 @@ class AudioManager: ObservableObject {
                 request.httpMethod = "POST"
                 request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                // Build enhanced prompt with instrument and BPM
+                var enhancedPrompt = self.currentPrompt
+                if self.selectedInstrument != .other {
+                    enhancedPrompt = "\(self.selectedInstrument.rawValue.lowercased()) - \(enhancedPrompt)"
+                }
+                if !enhancedPrompt.lowercased().contains("bpm") {
+                    enhancedPrompt += ", \(self.bpm) BPM"
+                }
+                
                 let body: [String: Any] = [
-                    "prompt": ["text": self.currentPrompt],
+                    "prompt": ["text": enhancedPrompt],
                     "format": "wav",
                     "looping": false
                 ]
@@ -214,7 +225,14 @@ class AudioManager: ObservableObject {
                 }
                 // Add new layer
                 let layerName = self.currentPrompt.components(separatedBy: ",").first?.trimmingCharacters(in: .whitespaces) ?? "New Layer"
-                let newLayer = Layer(name: layerName, prompt: self.currentPrompt, audioURL: trackURL)
+                let bpmValue = Int(self.bpm) ?? 120
+                let newLayer = Layer(
+                    name: layerName, 
+                    prompt: self.currentPrompt, 
+                    bpm: bpmValue,
+                    instrument: self.selectedInstrument,
+                    audioURL: trackURL
+                )
                 await MainActor.run {
                     self.layers.append(newLayer)
                     self.isGenerating = false

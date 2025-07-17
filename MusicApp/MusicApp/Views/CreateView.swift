@@ -23,6 +23,77 @@ struct CreateView: View {
                     }
                     .padding(.top)
                     
+                    // Instrument and BPM Selection
+                    VStack(spacing: 16) {
+                        // Instrument Selection
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Select Instrument")
+                                .font(.caption)
+                                .foregroundColor(.secondaryText)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(Layer.InstrumentType.allCases, id: \.self) { instrument in
+                                        Button(action: {
+                                            audioManager.selectedInstrument = instrument
+                                        }) {
+                                            VStack(spacing: 8) {
+                                                Image(systemName: instrument.icon)
+                                                    .font(.title2)
+                                                Text(instrument.rawValue)
+                                                    .font(.caption)
+                                            }
+                                            .frame(width: 80, height: 80)
+                                            .background(
+                                                audioManager.selectedInstrument == instrument ? 
+                                                LinearGradient.primaryGradient : 
+                                                Color.cardBackground
+                                            )
+                                            .foregroundColor(
+                                                audioManager.selectedInstrument == instrument ? 
+                                                .white : .secondaryText
+                                            )
+                                            .cornerRadius(12)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .stroke(
+                                                        audioManager.selectedInstrument == instrument ? 
+                                                        Color.clear : Color.borderColor, 
+                                                        lineWidth: 1
+                                                    )
+                                            )
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal, 2)
+                            }
+                        }
+                        
+                        // BPM Input
+                        HStack {
+                            Text("BPM")
+                                .font(.caption)
+                                .foregroundColor(.secondaryText)
+                            
+                            Spacer()
+                            
+                            TextField("120", text: $audioManager.bpm)
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 60)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Color.darkBackground.opacity(0.5))
+                                .cornerRadius(8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color.borderColor, lineWidth: 1)
+                                )
+                                .foregroundColor(.primaryText)
+                        }
+                    }
+                    .cardStyle()
+                    
                     // Creation Interface
                     VStack(spacing: 16) {
                         HStack {

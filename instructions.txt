@@ -1,0 +1,83 @@
+Co-creation Music App
+June 6th, 2025 - Reading time: 10 min.
+Making people create together
+One of the approaches supported by the Building the next $Bn Social App strategy is to make people spend some time together online to build real relationships, gaming is obviously the best example of successful online shared experience for relationship building, exploring other approaches, music is also universal
+Making an interactive Suno to create new songs together using AI has the potential to create real bonds, interesting content and a new AI first music production market that feels more authentic than pure genAi content (build the NextGen FL Studio to create music together, mobile-first, with ai)
+Onboarding
+Minimal Sign-Up
+Skip lengthy sign-up forms
+Use social logins (Google, Apple, TikTok) or allow the user to start creating immediately as a guest
+Guided First Prompt (Immediate Magic)
+The very first screen after launch should be the creation interface.
+Don't show a blank canvas. Pre-populate the prompt box with an exciting example: "a dreamy synth melody inspired by Tame Impala, 120 BPM"
+A single button: "Create Layer".
+First Layer Experience
+While the AI generates (keep this fast, under 10-15 seconds), show a cool, engaging loading animation.
+The moment the layer is ready, it starts playing automatically in a loop. This is the "wow" moment.
+Guided Second Prompt (Experiencing the Core Loop)
+A tooltip or guide appears: "Awesome melody! Every song needs a beat. Try adding some drums."
+The prompt box suggests: "a punchy lo-fi drum beat"
+The user hits "Create Layer" again. The app adds the drum layer, and now both layers play together, synced perfectly. The user has just created the foundation of a song.
+Introduce the Social Element
+A simple, non-intrusive prompt appears: "This is sounding great! [Share your first loop] or [Invite a friend to add bass]"
+This gently introduces the concept of sharing and collaboration without forcing it.
+Profile Creation (After Value is Proven)
+Only now, after the user has created something cool, do you prompt them to "Save your loop and create your artist profile" to continue. This is where they choose their artist name, etc.
+Meta
+Artist Profile
+This is the user's identity. It should showcase their "Top Tracks," collaborations, a short bio, and links to their other social profiles.
+Skills/Tags: Allow users to tag themselves with skills like "Drum Patterns," "Melodies," "Basslines," "Vocalist," etc., to facilitate collaboration
+The Discovery Feed (The "For You" Page)
+The central hub for discovery. It should feature a mix of finished tracks, trending loops, and crucially, open collaboration prompts.
+"Open Stems": Users can browse individual layers (basslines, drum loops) that others have made public. They can pull these directly into their own projects.
+"Finish My Track" Challenges: A user can post a 2-layer loop and ask the community to add to it.
+"Forking": Allow users to "fork" a public track to create their own remix or version.
+Gamification & Progression
+Producer Credits: When someone uses your public stem in their track, you automatically get a "producer credit." If their track becomes popular, your credit is seen more widely.
+Leaderboards: "Top New Artists," "Most Remixed Stem," "Top Collaborator."
+Skill Badges: Unlock badges for mastering different genres or creating a certain number of high-quality layers.
+Projects & Collaboration Management
+A simple interface to manage ongoing collaborations, chat with collaborators, and manage track versions.
+A "Band" feature where users can form official groups.
+Core-Loop
+Triggers
+External (Notifications, Messages, etc)
+Someone used your beat
+Someone asked to collaborate on a song
+Your layer was reused xxx times
+Your song was streamed xxx times
+Your friend / [User] released a new track
+Internal (Boredom, Creative Urge, Curiosity)
+Urge to create something new (“I have an idea”)
+Interesting beat or melody or style heard while listening to music (“I could use that for a song”)
+Need to create a song for a content (“I need my own Artistic Direction for this content”)
+Need to dig new UGC songs
+Actions
+Create a new layer
+Complete a song
+Publish a song
+Add a new friend
+Form a new band
+Listen to others’ layers and songs
+Rewards
+Usual unpredictable AI outputs
+Community validation (likes, etc)
+Collaboration requests
+Investment
+Layers
+Songs
+Playlists
+Profile
+Why it works?
+Focus on a Massive Market
+The music co-creation app focuses on the “entertainment” and “belonging” markets, it allows users to create, share and discover new music and connect with people with same taste
+Come for the tool stay for the network
+People come for the music creation tool and the ability to very easily create something that they “own” and feel the creators of (compared to Suno where output is super random and does not feel like “your work”)
+They stay because they are allowed to meet other musicians, hear new interesting songs that are not available anywhere else and collaborate with people building long lasting “online friendships” around music
+Have built-in virality
+New music is super viral, people like to share their creations and ask other people to collaborate on tracks with them
+It’s really important that every song comes with an easily shareable video/photo content so that we can showcase the App’s logo when shared to other platforms
+Create a wow effect
+The wow effect comes from the execution, the genai algorithm should allow to really control the output for every layer (including highly precise technical prompts for music production related concepts like sidechains, staccato, fades, tonality, etc)
+The layering should be content aware which means it should generate new layers with related layers in mind (especially BPM and tonality matching)
+
