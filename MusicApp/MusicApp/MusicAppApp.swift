@@ -3,11 +3,13 @@ import SwiftUI
 @main
 struct SyncFlowApp: App {
     @StateObject private var authManager = AuthenticationManager()
+    @StateObject private var audioManager = AudioManager()
     
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(authManager)
+                .environmentObject(audioManager)
                 .preferredColorScheme(.dark)
         }
     }

@@ -1,8 +1,6 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var audioManager = AudioManager()
-    
     var body: some View {
         TabView {
             CreateView()
@@ -34,7 +32,6 @@ struct ContentView: View {
                 .tag(3)
         }
         .accentColor(Color.purple)
-        .environmentObject(audioManager)
     }
 }
 

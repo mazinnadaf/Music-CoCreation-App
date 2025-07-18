@@ -193,6 +193,7 @@ struct FirstCreationView: View {
             ForEach(audioManager.layers) { layer in
                 AudioPlayerView(layer: layer, isLoading: false)
                     .padding(.horizontal)
+                    .environmentObject(audioManager)
             }
             
             Spacer()

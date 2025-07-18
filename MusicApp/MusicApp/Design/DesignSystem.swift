@@ -33,12 +33,47 @@ extension LinearGradient {
 struct GradientButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .padding(.horizontal, 24)
             .padding(.vertical, 16)
-            .background(LinearGradient.primaryGradient)
+            .padding(.horizontal, 24)
+            .background(
+                Group {
+                    if configuration.isPressed {
+                        LinearGradient.primaryGradient.opacity(0.8)
+                    } else {
+                        LinearGradient.primaryGradient
+                    }
+                }
+            )
             .foregroundColor(.white)
+            .fontWeight(.semibold)
             .cornerRadius(12)
-            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+struct SecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.vertical, 16)
+            .padding(.horizontal, 24)
+            .background(
+                Group {
+                    if configuration.isPressed {
+                        Color.cardBackground.opacity(0.8)
+                    } else {
+                        Color.cardBackground
+                    }
+                }
+            )
+            .foregroundColor(.primaryText)
+            .fontWeight(.semibold)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.borderColor, lineWidth: 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
@@ -46,7 +81,7 @@ struct GradientButtonStyle: ButtonStyle {
 struct CardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .padding()
+            .padding(20)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(LinearGradient.cardGradient)

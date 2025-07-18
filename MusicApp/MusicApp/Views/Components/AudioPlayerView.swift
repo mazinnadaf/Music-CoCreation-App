@@ -105,8 +105,18 @@ struct ActivePlayerView: View {
                 
                 Spacer()
                 
-                Image(systemName: "speaker.wave.2")
-                    .foregroundColor(.secondaryText)
+                HStack(spacing: 12) {
+                    Button(action: {
+                        audioManager.deleteLayer(layerId: layer.id)
+                    }) {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                            .font(.title3)
+                    }
+                    
+                    Image(systemName: "speaker.wave.2")
+                        .foregroundColor(.secondaryText)
+                }
             }
             
             // Waveform Visualization

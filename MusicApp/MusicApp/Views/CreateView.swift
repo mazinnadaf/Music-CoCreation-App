@@ -46,8 +46,8 @@ struct CreateView: View {
                                             .frame(width: 80, height: 80)
                                             .background(
                                                 audioManager.selectedInstrument == instrument ? 
-                                                LinearGradient.primaryGradient : 
-                                                Color.cardBackground
+                                                AnyShapeStyle(LinearGradient.primaryGradient) : 
+                                                AnyShapeStyle(Color.cardBackground)
                                             )
                                             .foregroundColor(
                                                 audioManager.selectedInstrument == instrument ? 
@@ -210,6 +210,43 @@ struct CreateView: View {
                     // Loading Layer
                     if audioManager.isGenerating {
                         AudioPlayerView(layer: nil, isLoading: true)
+                    }
+                    
+                    // Global Playback Controls
+                    if audioManager.layers.count > 1 {
+                        VStack(spacing: 12) {
+                            HStack {
+                                Image(systemName: "music.note.list")
+                                    .foregroundColor(.primaryText)
+                                Text("Mix Controls")
+                                    .font(.headline)
+                                    .foregroundColor(.primaryText)
+                                Spacer()
+                            }
+                            
+                            HStack(spacing: 12) {
+                                Button(action: audioManager.playAllLayers) {
+                                    HStack {
+                                        Image(systemName: "play.fill")
+                                        Text("Play All")
+                                    }
+                                    .font(.subheadline)
+                                    .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(GradientButtonStyle())
+                                
+                                Button(action: audioManager.stopAllLayers) {
+                                    HStack {
+                                        Image(systemName: "stop.fill")
+                                        Text("Stop All")
+                                    }
+                                    .font(.subheadline)
+                                    .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(SecondaryButtonStyle())
+                            }
+                        }
+                        .cardStyle()
                     }
                     
                     // Created Layers
