@@ -290,14 +290,32 @@ class AudioManager: NSObject, ObservableObject {
                     print("[Beatoven] Poll status: \(status)")
                     print("[Beatoven] Full statusResult: \(statusResult)")
                     if status == "composed" {
-                        print("[DEBUG] Status is composed, checking for track_url...")
+                        print("[DEBUG] Status is composed, checking for audio URL...")
                         
-                        // The track_url is nested inside the meta object
-                        if let meta = statusResult["meta"] as? [String: Any],
-                           let urlString = meta["track_url"] as? String {
-                            print("[DEBUG] Found track_url string: \(urlString)")
-                            if let url = URL(string: urlString) {
-                                print("[Beatoven] Composed track URL: \(url)")
+                        // The track_url and stems_url are nested inside the meta object
+                        if let meta = statusResult["meta"] as? [String: Any] {
+                            var urlString: String?
+                            
+                            // Determine which URL to use based on selected instrument
+                            switch self.selectedInstrument {
+                            case .all:
+                                // Use the full track URL for "All" instrument type
+                                urlString = meta["track_url"] as? String
+                                print("[DEBUG] Selected 'All' - using track_url")
+                                
+                            case .bass, .chords, .melody, .percussion:
+                                // Use the corresponding stem URL
+                                if let stemsUrl = meta["stems_url"] as? [String: Any] {
+                                    let stemKey = self.selectedInstrument.rawValue.lowercased()
+                                    urlString = stemsUrl[stemKey] as? String
+                                    print("[DEBUG] Selected '\(self.selectedInstrument.rawValue)' - using stems_url.\(stemKey)")
+                                } else {
+                                    print("[DEBUG] No stems_url found in meta object")
+                                }
+                            }
+                            
+                            if let urlString = urlString, let url = URL(string: urlString) {
+                                print("[Beatoven] Audio URL: \(url)")
                                 print("[AudioPlayer] Starting download process...")
                                 print("[DEBUG] About to call downloadAndSaveAudio...")
                                 
@@ -312,14 +330,18 @@ class AudioManager: NSObject, ObservableObject {
                                     print("[AudioPlayer] ❌ Download failed, using remote URL as fallback")
                                 }
                             } else {
-                                print("[DEBUG] Failed to create URL from string: \(urlString)")
+                                print("[DEBUG] Failed to get valid URL for instrument: \(self.selectedInstrument.rawValue)")
+                                print("[DEBUG] Available keys in statusResult: \(statusResult.keys)")
+                                if let meta = statusResult["meta"] as? [String: Any] {
+                                    print("[DEBUG] Available keys in meta: \(meta.keys)")
+                                    if let stemsUrl = meta["stems_url"] as? [String: Any] {
+                                        print("[DEBUG] Available stems: \(stemsUrl.keys)")
+                                    }
+                                }
                             }
                         } else {
-                            print("[DEBUG] No track_url found in meta object")
+                            print("[DEBUG] No meta object found in statusResult")
                             print("[DEBUG] Available keys in statusResult: \(statusResult.keys)")
-                            if let meta = statusResult["meta"] as? [String: Any] {
-                                print("[DEBUG] Available keys in meta: \(meta.keys)")
-                            }
                         }
                         break
                     }
