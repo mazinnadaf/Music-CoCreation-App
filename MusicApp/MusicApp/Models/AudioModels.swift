@@ -24,28 +24,24 @@ struct Layer: Identifiable, Codable {
     var audioURL: URL? // <-- Added for Beatoven audio
     
     enum InstrumentType: String, Codable, CaseIterable {
-        case drums = "Drums"
+        case all = "All"
+        case percussion = "Percussion"
         case bass = "Bass"
         case melody = "Melody"
-        case vocals = "Vocals"
-        case pads = "Pads"
-        case fx = "FX"
-        case other = "Other"
+        case chords = "Chords"
         
         var icon: String {
             switch self {
-            case .drums: return "metronome"
+            case .all: return "music.note.list"
+            case .percussion: return "metronome"
             case .bass: return "waveform"
             case .melody: return "music.note"
-            case .vocals: return "mic"
-            case .pads: return "pianokeys"
-            case .fx: return "sparkles"
-            case .other: return "music.quarternote.3"
+            case .chords: return "music.quarternote.3"
             }
         }
     }
     
-    init(name: String, prompt: String, bpm: Int = 120, instrument: InstrumentType = .other, creatorId: UUID? = nil, creatorName: String? = nil, audioURL: URL? = nil) {
+    init(name: String, prompt: String, bpm: Int = 120, instrument: InstrumentType = .all, creatorId: UUID? = nil, creatorName: String? = nil, audioURL: URL? = nil) {
         self.id = UUID()
         self.name = name
         self.prompt = prompt
@@ -120,7 +116,7 @@ class AudioManager: NSObject, ObservableObject {
     @Published var isGenerating = false
     @Published var currentPrompt = "a dreamy synth melody inspired by Tame Impala, 120 BPM"
     @Published var showSuggestion = true
-    @Published var selectedInstrument: Layer.InstrumentType = .other
+    @Published var selectedInstrument: Layer.InstrumentType = .all
     @Published var bpm: String = "120"
     
     private var timer: Timer?
@@ -249,9 +245,6 @@ class AudioManager: NSObject, ObservableObject {
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                 // Build enhanced prompt with instrument and BPM
                 var enhancedPrompt = self.currentPrompt
-                if self.selectedInstrument != .other {
-                    enhancedPrompt = "\(self.selectedInstrument.rawValue.lowercased()) - \(enhancedPrompt)"
-                }
                 if !enhancedPrompt.lowercased().contains("bpm") {
                     enhancedPrompt += ", \(self.bpm) BPM"
                 }
