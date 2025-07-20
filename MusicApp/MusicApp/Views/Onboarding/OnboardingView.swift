@@ -7,6 +7,8 @@ struct OnboardingView: View {
     @State private var artistName = ""
     @State private var selectedSkills: Set<Skill> = []
     @State private var hasCreatedFirstLayer = false
+    @State private var showAuthSheet = false
+    @State private var isLoginMode = true
     
     enum OnboardingStep {
         case welcome
@@ -20,11 +22,17 @@ struct OnboardingView: View {
             
             switch currentStep {
             case .welcome:
-                WelcomeView(onContinue: {
-                    withAnimation(.spring()) {
-                        currentStep = .createFirst
+                WelcomeView(
+                    onContinue: {
+                        withAnimation(.spring()) {
+                            currentStep = .createFirst
+                        }
+                    },
+                    onShowAuth: { isLogin in
+                        isLoginMode = isLogin
+                        showAuthSheet = true
                     }
-                })
+                )
                 .environmentObject(authManager)
                 
             case .createFirst:
@@ -52,6 +60,10 @@ struct OnboardingView: View {
                 )
             }
         }
+        .sheet(isPresented: $showAuthSheet) {
+            EmailAuthSheet(isLoginMode: $isLoginMode, showSheet: $showAuthSheet)
+                .environmentObject(authManager)
+        }
     }
 }
 
@@ -59,6 +71,7 @@ struct OnboardingView: View {
 struct WelcomeView: View {
     @EnvironmentObject var authManager: AuthenticationManager
     let onContinue: () -> Void
+    let onShowAuth: (Bool) -> Void
     
     var body: some View {
         VStack(spacing: 32) {
@@ -84,27 +97,27 @@ struct WelcomeView: View {
             
             Spacer()
             
-            // Social Login Options
             VStack(spacing: 12) {
-                ForEach(SocialProvider.allCases, id: \.self) { provider in
-                    SocialLoginButton(provider: provider) {
-                        // Handle social login
-                    }
-                }
-                
-                Text("or")
-                    .font(.caption)
-                    .foregroundColor(.secondaryText)
-                    .padding(.vertical, 8)
-                
-                Button(action: {
-                    // Authenticate as guest user for demo
-                    authManager.signInAsGuest()
-                    onContinue()
-                }) {
+                Button(action: { onShowAuth(true) }) {
                     HStack {
-                        Image(systemName: "sparkles")
-                        Text("Start Creating")
+                        Image(systemName: "person.fill")
+                        Text("Log In")
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.cardBackground)
+                    .foregroundColor(.primaryText)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.borderColor, lineWidth: 1)
+                    )
+                }
+                Button(action: { onShowAuth(false) }) {
+                    HStack {
+                        Image(systemName: "person.badge.plus")
+                        Text("Sign Up")
                     }
                     .font(.headline)
                     .frame(maxWidth: .infinity)
@@ -444,6 +457,110 @@ struct ShareSheet: UIViewControllerRepresentable {
     }
     
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+// MARK: - Email Auth Sheet
+struct EmailAuthSheet: View {
+    @EnvironmentObject var authManager: AuthenticationManager
+    @Binding var isLoginMode: Bool
+    @Binding var showSheet: Bool
+    @State private var email = ""
+    @State private var password = ""
+    @State private var username = ""
+    @State private var artistName = ""
+    @State private var errorMessage: String?
+    @State private var isLoading = false
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                Text(isLoginMode ? "Log In" : "Sign Up")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .padding(.top, 24)
+                
+                VStack(spacing: 16) {
+                    TextField("Email", text: $email)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                        .textFieldStyle(CustomTextFieldStyle())
+                    SecureField("Password", text: $password)
+                        .textFieldStyle(CustomTextFieldStyle())
+                    if !isLoginMode {
+                        TextField("Username", text: $username)
+                            .autocapitalization(.none)
+                            .textFieldStyle(CustomTextFieldStyle())
+                        TextField("Artist Name", text: $artistName)
+                            .textFieldStyle(CustomTextFieldStyle())
+                    }
+                }
+                .padding(.horizontal, 24)
+                
+                if let error = errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                
+                VStack(spacing: 16) {
+                    Button(action: handleAuth) {
+                        if isLoading {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                        } else {
+                            Text(isLoginMode ? "Log In" : "Sign Up")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(LinearGradient.primaryGradient)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                        }
+                    }
+                    .disabled(isLoading || email.isEmpty || password.isEmpty || (!isLoginMode && (username.isEmpty || artistName.isEmpty)))
+                    
+                    Button(action: { isLoginMode.toggle() }) {
+                        Text(isLoginMode ? "Don't have an account? Sign Up" : "Already have an account? Log In")
+                            .font(.footnote)
+                            .foregroundColor(.secondaryText)
+                    }
+                }
+                .padding(.horizontal, 24)
+                
+                Spacer()
+            }
+            .navigationBarItems(trailing: Button("Close") { showSheet = false })
+        }
+    }
+    
+    private func handleAuth() {
+        errorMessage = nil
+        isLoading = true
+        if isLoginMode {
+            authManager.login(email: email, password: password) { result in
+                isLoading = false
+                switch result {
+                case .success:
+                    showSheet = false
+                case .failure(let error):
+                    errorMessage = error.localizedDescription
+                }
+            }
+        } else {
+            authManager.signUp(email: email, password: password, username: username, artistName: artistName) { result in
+                isLoading = false
+                switch result {
+                case .success:
+                    showSheet = false
+                case .failure(let error):
+                    errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
 }
 
 #Preview {

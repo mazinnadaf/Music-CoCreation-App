@@ -3,7 +3,7 @@ import SwiftUI
 
 // MARK: - User Models
 struct User: Identifiable, Codable {
-    let id: UUID
+    let id: String // Changed from UUID to String
     var username: String
     var artistName: String
     var bio: String
@@ -14,11 +14,11 @@ struct User: Identifiable, Codable {
     var badges: [Badge]
     var joinedDate: Date
     var isVerified: Bool
-    var friends: [UUID] // Friend user IDs
-    var starredTracks: [UUID] // Starred track IDs
+    var friends: [String] // Changed from [UUID] to [String]
+    var starredTracks: [String] // Changed from [UUID] to [String]
     
     init(username: String, artistName: String) {
-        self.id = UUID()
+        self.id = UUID().uuidString
         self.username = username
         self.artistName = artistName
         self.bio = ""
@@ -32,16 +32,32 @@ struct User: Identifiable, Codable {
         self.friends = []
         self.starredTracks = []
     }
+    // Memberwise initializer for all properties
+    init(id: String, username: String, artistName: String, bio: String, avatar: String?, skills: [Skill], socialLinks: [SocialLink], stats: UserStats, badges: [Badge], joinedDate: Date, isVerified: Bool, friends: [String], starredTracks: [String]) {
+        self.id = id
+        self.username = username
+        self.artistName = artistName
+        self.bio = bio
+        self.avatar = avatar
+        self.skills = skills
+        self.socialLinks = socialLinks
+        self.stats = stats
+        self.badges = badges
+        self.joinedDate = joinedDate
+        self.isVerified = isVerified
+        self.friends = friends
+        self.starredTracks = starredTracks
+    }
 }
 
 struct Skill: Identifiable, Codable, Hashable {
-    let id: UUID
+    let id: String
     let name: String
     let icon: String
     let level: SkillLevel
     
     init(name: String, icon: String, level: SkillLevel) {
-        self.id = UUID()
+        self.id = UUID().uuidString
         self.name = name
         self.icon = icon
         self.level = level
@@ -65,12 +81,12 @@ struct Skill: Identifiable, Codable, Hashable {
 }
 
 struct SocialLink: Identifiable, Codable {
-    let id: UUID
+    let id: String
     let platform: SocialPlatform
     let url: String
     
     init(platform: SocialPlatform, url: String) {
-        self.id = UUID()
+        self.id = UUID().uuidString
         self.platform = platform
         self.url = url
     }
@@ -107,7 +123,7 @@ struct UserStats: Codable {
 }
 
 struct Badge: Identifiable, Codable {
-    let id: UUID
+    let id: String
     let name: String
     let description: String
     let icon: String
@@ -115,7 +131,7 @@ struct Badge: Identifiable, Codable {
     let rarity: BadgeRarity
     
     init(name: String, description: String, icon: String, earnedDate: Date, rarity: BadgeRarity) {
-        self.id = UUID()
+        self.id = UUID().uuidString
         self.name = name
         self.description = description
         self.icon = icon
@@ -222,8 +238,8 @@ struct Band: Identifiable, Codable {
 // MARK: - Message Models
 struct Message: Identifiable, Codable {
     let id: UUID
-    let senderId: UUID
-    let receiverId: UUID
+    let senderId: String
+    let receiverId: String
     let content: String
     let timestamp: Date
     var isRead: Bool
@@ -235,7 +251,7 @@ struct Message: Identifiable, Codable {
         case collaborationInvite = "collab_invite"
     }
     
-    init(senderId: UUID, receiverId: UUID, content: String, messageType: MessageType = .text) {
+    init(senderId: String, receiverId: String, content: String, messageType: MessageType = .text) {
         self.id = UUID()
         self.senderId = senderId
         self.receiverId = receiverId
@@ -248,12 +264,12 @@ struct Message: Identifiable, Codable {
 
 struct Conversation: Identifiable, Codable {
     let id: UUID
-    let participants: [UUID]
+    let participants: [String]
     var messages: [Message]
     var lastMessage: Message?
     var unreadCount: Int
     
-    init(participants: [UUID]) {
+    init(participants: [String]) {
         self.id = UUID()
         self.participants = participants
         self.messages = []
