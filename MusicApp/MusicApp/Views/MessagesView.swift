@@ -148,6 +148,7 @@ struct ChatView: View {
     @State private var messages: [Message] = []
     @EnvironmentObject var authManager: AuthenticationManager
     @Environment(\.dismiss) var dismiss
+    @FocusState private var isMessageFieldFocused: Bool
     
     var body: some View {
         NavigationView {
@@ -172,6 +173,9 @@ struct ChatView: View {
                             proxy.scrollTo(lastMessage.id, anchor: .bottom)
                         }
                     }
+                    .onTapGesture {
+                        isMessageFieldFocused = false
+                    }
                 }
                 
                 // Message Input
@@ -182,6 +186,7 @@ struct ChatView: View {
                         .background(Color.cardBackground)
                         .cornerRadius(20)
                         .foregroundColor(.primaryText)
+                        .focused($isMessageFieldFocused)
                     
                     Button(action: sendMessage) {
                         Image(systemName: "paperplane.fill")
@@ -285,6 +290,7 @@ struct NewMessageView: View {
     @State private var searchText = ""
     @State private var friends: [User] = [] // Would be populated from data
     @Environment(\.dismiss) var dismiss
+    @FocusState private var isSearchFieldFocused: Bool
     
     var body: some View {
         NavigationView {
@@ -295,6 +301,7 @@ struct NewMessageView: View {
                         .foregroundColor(.secondaryText)
                     TextField("Search friends...", text: $searchText)
                         .foregroundColor(.primaryText)
+                        .focused($isSearchFieldFocused)
                 }
                 .padding()
                 .background(Color.cardBackground)
@@ -318,6 +325,9 @@ struct NewMessageView: View {
             .background(Color.darkBackground.ignoresSafeArea())
             .navigationTitle("New Message")
             .navigationBarTitleDisplayMode(.inline)
+            .onTapGesture {
+                isSearchFieldFocused = false
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }

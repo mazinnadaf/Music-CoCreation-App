@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CreateView: View {
     @EnvironmentObject var audioManager: AudioManager
+    @FocusState private var isTextFieldFocused: Bool
     
     var body: some View {
         NavigationView {
@@ -90,6 +91,7 @@ struct CreateView: View {
                                         .stroke(Color.borderColor, lineWidth: 1)
                                 )
                                 .foregroundColor(.primaryText)
+                                .focused($isTextFieldFocused)
                         }
                     }
                     .cardStyle()
@@ -115,6 +117,7 @@ struct CreateView: View {
                                     .stroke(Color.borderColor, lineWidth: 1)
                             )
                             .font(.body)
+                            .focused($isTextFieldFocused)
                         
                         // Suggested Prompts
                         if audioManager.showSuggestion && audioManager.layers.isEmpty {
@@ -263,6 +266,9 @@ struct CreateView: View {
             }
             .background(Color.darkBackground)
             .navigationBarHidden(true)
+            .onTapGesture {
+                isTextFieldFocused = false
+            }
         }
     }
 }

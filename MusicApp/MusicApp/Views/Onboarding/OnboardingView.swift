@@ -126,6 +126,7 @@ struct FirstCreationView: View {
     @Binding var hasCreatedLayer: Bool
     let onContinue: () -> Void
     @State private var showShareOptions = false
+    @FocusState private var isTextEditorFocused: Bool
     
     var body: some View {
         VStack(spacing: 24) {
@@ -158,6 +159,7 @@ struct FirstCreationView: View {
                             .stroke(Color.borderColor, lineWidth: 1)
                     )
                     .font(.body)
+                    .focused($isTextEditorFocused)
                 
                 Button(action: {
                     audioManager.createLayer()
@@ -248,6 +250,9 @@ struct FirstCreationView: View {
         .sheet(isPresented: $showShareOptions) {
             ShareSheet(items: ["Check out my first beat on BeatSync! 🎵"])
         }
+        .onTapGesture {
+            isTextEditorFocused = false
+        }
     }
 }
 
@@ -256,6 +261,7 @@ struct ProfileSetupView: View {
     @Binding var artistName: String
     @Binding var selectedSkills: Set<Skill>
     let onComplete: () -> Void
+    @FocusState private var isArtistNameFieldFocused: Bool
     
     var body: some View {
         VStack(spacing: 32) {
@@ -287,6 +293,7 @@ struct ProfileSetupView: View {
                     
                     TextField("Enter your artist name", text: $artistName)
                         .textFieldStyle(CustomTextFieldStyle())
+                        .focused($isArtistNameFieldFocused)
                 }
                 
                 // Skills
@@ -331,6 +338,9 @@ struct ProfileSetupView: View {
             .disabled(artistName.isEmpty)
             .padding(.horizontal, 24)
             .padding(.bottom, 48)
+        }
+        .onTapGesture {
+            isArtistNameFieldFocused = false
         }
     }
 }
