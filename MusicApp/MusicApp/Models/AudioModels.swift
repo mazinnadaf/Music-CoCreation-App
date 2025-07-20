@@ -41,8 +41,8 @@ struct Layer: Identifiable, Codable {
         }
     }
     
-    init(name: String, prompt: String, bpm: Int = 120, instrument: InstrumentType = .all, creatorId: UUID? = nil, creatorName: String? = nil, audioURL: URL? = nil) {
-        self.id = UUID()
+    init(id: UUID? = nil, name: String, prompt: String, bpm: Int = 120, instrument: InstrumentType = .all, creatorId: UUID? = nil, creatorName: String? = nil, audioURL: URL? = nil) {
+        self.id = id ?? UUID()
         self.name = name
         self.prompt = prompt
         self.bpm = bpm
@@ -122,6 +122,7 @@ class AudioManager: NSObject, ObservableObject {
     private var timer: Timer?
     private var players: [UUID: AVPlayer] = [:]
     private var playerObservers: [UUID: Any] = [:]
+    private var pendingLayerId: UUID?
     
     let suggestedPrompts = [
         "a dreamy synth melody inspired by Tame Impala, 120 BPM",
@@ -215,14 +216,72 @@ class AudioManager: NSObject, ObservableObject {
         }
     }
     
-    func getAPIKey() -> String? {
-       guard let path = Bundle.main.path(forResource: "Secrets", ofType: "plist"),
-             let dict = NSDictionary(contentsOfFile: path),
-             let key = dict["API_KEY"] as? String else {
-           print("API Key not found")
-           return nil
-       }
-       return key
+    /// Retrieves the Beatoven API key from Secrets.plist
+    /// Expected keys in order of preference:
+    /// 1. BEATOVEN_API_KEY - Specific key for Beatoven API
+    /// 2. API_KEY - Generic key (for backward compatibility)
+    private func getBeatovenAPIKey() -> String? {
+        // Debug: List all plist files in bundle
+        if let resourcePath = Bundle.main.resourcePath {
+            do {
+                let items = try FileManager.default.contentsOfDirectory(atPath: resourcePath)
+                let plistFiles = items.filter { $0.hasSuffix(".plist") }
+                print("[Beatoven] Found plist files in bundle: \(plistFiles)")
+            } catch {
+                print("[Beatoven] Error listing bundle contents: \(error)")
+            }
+        }
+        
+        // Load Secrets.plist
+        guard let path = Bundle.main.path(forResource: "Secrets", ofType: "plist") else {
+            print("[Beatoven] ❌ ERROR: Secrets.plist file not found in bundle")
+            print("[Beatoven] Please ensure Secrets.plist is added to your project and included in the target")
+            return nil
+        }
+        
+        print("[Beatoven] Loading Secrets.plist from: \(path)")
+        
+        guard let dict = NSDictionary(contentsOfFile: path) else {
+            print("[Beatoven] ❌ ERROR: Failed to load dictionary from Secrets.plist")
+            return nil
+        }
+        
+        // Debug: Print all available keys
+        print("[Beatoven] Available keys in Secrets.plist: \(dict.allKeys)")
+        
+        // Try to get Beatoven-specific key first
+        if let beatovenKey = dict["BEATOVEN_API_KEY"] as? String {
+            print("[Beatoven] ✅ Found BEATOVEN_API_KEY")
+            // Validate it's not a Supabase key
+            if beatovenKey.hasPrefix("sb_") {
+                print("[Beatoven] ⚠️ WARNING: BEATOVEN_API_KEY appears to be a Supabase key (starts with 'sb_')")
+                print("[Beatoven] Please update BEATOVEN_API_KEY in Secrets.plist with your actual Beatoven API key")
+                return nil
+            }
+            return beatovenKey
+        }
+        
+        // Fall back to generic API_KEY for backward compatibility
+        if let apiKey = dict["API_KEY"] as? String {
+            print("[Beatoven] ⚠️ Found API_KEY (using as fallback - consider using BEATOVEN_API_KEY instead)")
+            // Validate it's not a Supabase key
+            if apiKey.hasPrefix("sb_") {
+                print("[Beatoven] ❌ ERROR: API_KEY contains a Supabase key (starts with 'sb_')")
+                print("[Beatoven] Please update API_KEY in Secrets.plist with your actual Beatoven API key")
+                print("[Beatoven] Or add a new entry BEATOVEN_API_KEY with your Beatoven API key")
+                return nil
+            }
+            return apiKey
+        }
+        
+        // No valid key found
+        print("[Beatoven] ❌ ERROR: No valid Beatoven API key found in Secrets.plist")
+        print("[Beatoven] Please add one of the following keys to your Secrets.plist:")
+        print("[Beatoven]   - BEATOVEN_API_KEY (recommended)")
+        print("[Beatoven]   - API_KEY")
+        print("[Beatoven] Make sure the value is your actual Beatoven API key, not a Supabase key")
+        
+        return nil
     }
     
     
@@ -232,11 +291,16 @@ class AudioManager: NSObject, ObservableObject {
         showSuggestion = false
         Task {
             do {
-                guard let apiKey = getAPIKey() else {
-                    print("API Key not found")
-                    isGenerating = false
+                guard let apiKey = getBeatovenAPIKey() else {
+                    print("[Beatoven] ❌ Failed to retrieve Beatoven API key")
+                    await MainActor.run {
+                        self.isGenerating = false
+                    }
                     return
                 }
+                
+                print("[Beatoven] API Key retrieved: \(String(apiKey.prefix(10)))...")
+                print("[Beatoven] API Key length: \(apiKey.count)")
                 // Compose request
                 let composeURL = URL(string: "https://public-api.beatoven.ai/api/v1/tracks/compose")!
                 var request = URLRequest(url: composeURL)
@@ -255,7 +319,21 @@ class AudioManager: NSObject, ObservableObject {
                     "looping": false
                 ]
                 request.httpBody = try JSONSerialization.data(withJSONObject: body)
+                print("[Beatoven] Sending compose request...")
+                print("[Beatoven] Request headers: \(request.allHTTPHeaderFields ?? [:])")
+                print("[Beatoven] Request body: \(String(data: request.httpBody ?? Data(), encoding: .utf8) ?? "nil")")
+                
                 let (data, response) = try await URLSession.shared.data(for: request)
+                
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("[Beatoven] Response status code: \(httpResponse.statusCode)")
+                    print("[Beatoven] Response headers: \(httpResponse.allHeaderFields)")
+                    
+                    if httpResponse.statusCode != 200 {
+                        print("[Beatoven] Response body: \(String(data: data, encoding: .utf8) ?? "nil")")
+                    }
+                }
+                
                 guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
                     print("Compose API failed: \(response)")
                     isGenerating = false
@@ -319,6 +397,9 @@ class AudioManager: NSObject, ObservableObject {
                                 print("[AudioPlayer] Starting download process...")
                                 print("[DEBUG] About to call downloadAndSaveAudio...")
                                 
+                                // Store the remote URL for Supabase
+                                let remoteURLString = urlString
+                                
                                 // Download and save audio file locally
                                 if let localURL = await self.downloadAndSaveAudio(from: url, taskId: taskId) {
                                     trackURL = localURL
@@ -328,6 +409,37 @@ class AudioManager: NSObject, ObservableObject {
                                     // Fallback to remote URL if download fails
                                     trackURL = url
                                     print("[AudioPlayer] ❌ Download failed, using remote URL as fallback")
+                                }
+                                
+                                // Save track to Supabase here while we have access to all data
+                                let bpmValue = Int(self.bpm) ?? 120
+                                let layerId = UUID()
+                                
+                                // Create and save track to Supabase
+                                Task {
+                                    do {
+                                        let metadata: [String: Any] = [
+                                            "instrument": self.selectedInstrument.rawValue,
+                                            "bpm": bpmValue,
+                                            "prompt": self.currentPrompt,
+                                            "duration": 30.0,
+                                            "task_id": taskId
+                                        ]
+                                        try await SupabaseManager.shared.saveTrack(
+                                            layerId: layerId.uuidString,
+                                            trackUrl: remoteURLString,
+                                            collaborationId: nil,
+                                            metadata: metadata
+                                        )
+                                        print("[Supabase] Track saved successfully with remote URL: \(remoteURLString)")
+                                    } catch {
+                                        print("[Supabase] Failed to save track to Supabase: \(error)")
+                                    }
+                                }
+                                
+                                // Store the layer ID for later use
+                                await MainActor.run {
+                                    self.pendingLayerId = layerId
                                 }
                             } else {
                                 print("[DEBUG] Failed to get valid URL for instrument: \(self.selectedInstrument.rawValue)")
@@ -355,13 +467,20 @@ class AudioManager: NSObject, ObservableObject {
                 // Add new layer
                 let layerName = self.currentPrompt.components(separatedBy: ",").first?.trimmingCharacters(in: .whitespaces) ?? "New Layer"
                 let bpmValue = Int(self.bpm) ?? 120
+                
+                // Use the pending layer ID if we saved to Supabase, otherwise create new
+                let layerId = self.pendingLayerId ?? UUID()
                 let newLayer = Layer(
+                    id: layerId,
                     name: layerName, 
                     prompt: self.currentPrompt, 
                     bpm: bpmValue,
                     instrument: self.selectedInstrument,
                     audioURL: trackURL
                 )
+                
+                // Clear pending layer ID
+                self.pendingLayerId = nil
                 await MainActor.run {
                     self.layers.append(newLayer)
                     self.isGenerating = false

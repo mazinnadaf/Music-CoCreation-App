@@ -4,7 +4,7 @@ struct MessagesView: View {
     @State private var conversations: [Conversation] = []
     @State private var selectedConversation: Conversation?
     @State private var showNewMessage = false
-    @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var supabase: SupabaseManager
     
     var body: some View {
         NavigationView {
@@ -19,7 +19,7 @@ struct MessagesView: View {
                             ForEach(conversations) { conversation in
                                 ConversationRow(
                                     conversation: conversation,
-                                    currentUserId: authManager.currentUser?.id ?? UUID()
+                                    currentUserId: supabase.currentUser?.id ?? UUID()
                                 ) {
                                     selectedConversation = conversation
                                 }
@@ -46,7 +46,7 @@ struct MessagesView: View {
             }
             .sheet(item: $selectedConversation) { conversation in
                 ChatView(conversation: conversation)
-                    .environmentObject(authManager)
+                .environmentObject(supabase)
             }
         }
     }
@@ -146,7 +146,7 @@ struct ChatView: View {
     let conversation: Conversation
     @State private var messageText = ""
     @State private var messages: [Message] = []
-    @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var supabase: SupabaseManager
     @Environment(\.dismiss) var dismiss
     @FocusState private var isMessageFieldFocused: Bool
     
@@ -160,7 +160,7 @@ struct ChatView: View {
                             ForEach(messages) { message in
                                 MessageBubble(
                                     message: message,
-                                    isFromCurrentUser: message.senderId == authManager.currentUser?.id
+                                    isFromCurrentUser: message.senderId == supabase.currentUser?.id
                                 )
                                 .id(message.id)
                             }
@@ -225,7 +225,7 @@ struct ChatView: View {
     }
     
     private func sendMessage() {
-        guard let currentUserId = authManager.currentUser?.id,
+        guard let currentUserId = supabase.currentUser?.id,
               !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         
         let newMessage = Message(
@@ -377,5 +377,5 @@ struct FriendRow: View {
 
 #Preview {
     MessagesView()
-        .environmentObject(AuthenticationManager())
+        .environmentObject(SupabaseManager.shared)
 }

@@ -1,7 +1,8 @@
 import SwiftUI
 
+
 struct OnboardingView: View {
-    @EnvironmentObject var authManager: AuthenticationManager
+@EnvironmentObject var supabase: SupabaseManager
     @StateObject private var audioManager = AudioManager()
     @State private var currentStep: OnboardingStep = .welcome
     @State private var artistName = ""
@@ -25,7 +26,7 @@ struct OnboardingView: View {
                         currentStep = .createFirst
                     }
                 })
-                .environmentObject(authManager)
+                    .environmentObject(supabase)
                 
             case .createFirst:
                 FirstCreationView(
@@ -43,11 +44,9 @@ struct OnboardingView: View {
                     artistName: $artistName,
                     selectedSkills: $selectedSkills,
                     onComplete: {
-                        authManager.completeProfile(
-                            artistName: artistName,
-                            bio: nil,
-                            skills: Array(selectedSkills)
-                        )
+                        // For now, just complete the onboarding
+                        // In real implementation, this would save to Supabase
+                        supabase.isAuthenticated = true
                     }
                 )
             }
@@ -57,7 +56,7 @@ struct OnboardingView: View {
 
 // MARK: - Welcome View
 struct WelcomeView: View {
-    @EnvironmentObject var authManager: AuthenticationManager
+@EnvironmentObject var supabase: SupabaseManager
     let onContinue: () -> Void
     
     var body: some View {
@@ -99,7 +98,8 @@ struct WelcomeView: View {
                 
                 Button(action: {
                     // Authenticate as guest user for demo
-                    authManager.signInAsGuest()
+        // For now, just mark as authenticated
+        supabase.isAuthenticated = true
                     onContinue()
                 }) {
                     HStack {
@@ -448,5 +448,5 @@ struct ShareSheet: UIViewControllerRepresentable {
 
 #Preview {
     OnboardingView()
-        .environmentObject(AuthenticationManager())
+        .environmentObject(SupabaseManager.shared)
 }

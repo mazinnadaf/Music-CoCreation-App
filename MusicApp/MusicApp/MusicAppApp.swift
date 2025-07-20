@@ -2,13 +2,13 @@ import SwiftUI
 
 @main
 struct SyncFlowApp: App {
-    @StateObject private var authManager = AuthenticationManager()
+@StateObject private var supabase = SupabaseManager.shared
     @StateObject private var audioManager = AudioManager()
     
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environmentObject(authManager)
+                .environmentObject(supabase)
                 .environmentObject(audioManager)
                 .preferredColorScheme(.dark)
         }
@@ -16,32 +16,17 @@ struct SyncFlowApp: App {
 }
 
 struct RootView: View {
-    @EnvironmentObject var authManager: AuthenticationManager
-    
+    @EnvironmentObject var supabase: SupabaseManager
+
     var body: some View {
-        switch authManager.authState {
-        case .unauthenticated, .authenticating:
-            OnboardingView()
+        if supabase.isAuthenticated {
+            ContentView()
+        } else {
+            AuthView()
                 .transition(.asymmetric(
                     insertion: .move(edge: .trailing),
                     removal: .move(edge: .leading)
                 ))
-        case .authenticated(_):
-            if authManager.hasCompletedOnboarding {
-                ContentView()
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing),
-                        removal: .move(edge: .leading)
-                    ))
-            } else {
-                OnboardingView()
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing),
-                        removal: .move(edge: .leading)
-                    ))
-            }
-        case .onboarding:
-            OnboardingView()
         }
     }
 }

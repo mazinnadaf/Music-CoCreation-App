@@ -1,10 +1,12 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var supabase: SupabaseManager
     @State private var selectedTab: ProfileTab = .overview
     @State private var showEditProfile = false
     @State private var showSettings = false
+    @State private var showLogoutAlert = false
+    @State private var isLoggingOut = false
     
     enum ProfileTab: String, CaseIterable {
         case overview = "Overview"
@@ -26,8 +28,26 @@ struct ProfileView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 0) {
+                    // Header with Settings and Logout
+                    HStack {
+                        Spacer()
+                        
+                        Button(action: { showSettings = true }) {
+                            Image(systemName: "gearshape.fill")
+                                .font(.title3)
+                                .foregroundColor(.secondaryText)
+                        }
+                        
+                        Button(action: { showLogoutAlert = true }) {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .font(.title3)
+                                .foregroundColor(.red)
+                        }
+                    }
+                    .padding()
+                    
                     // Profile Header
-                    ProfileHeaderView(user: authManager.currentUser, showEditProfile: $showEditProfile)
+                    ProfileHeaderView(user: supabase.currentUser, showEditProfile: $showEditProfile)
                     
                     // Tab Selector
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -49,13 +69,13 @@ struct ProfileView: View {
                     Group {
                         switch selectedTab {
                         case .overview:
-                            ProfileOverviewView(user: authManager.currentUser)
+                            ProfileOverviewView(user: supabase.currentUser)
                         case .tracks:
                             ProfileTracksView()
                         case .collaborations:
                             ProfileCollaborationsView()
                         case .badges:
-                            ProfileBadgesView(user: authManager.currentUser)
+                            ProfileBadgesView(user: supabase.currentUser)
                         }
                     }
                     .padding(.horizontal)
@@ -65,10 +85,46 @@ struct ProfileView: View {
             .background(Color.darkBackground)
             .navigationBarHidden(true)
             .sheet(isPresented: $showEditProfile) {
-                EditProfileView(user: authManager.currentUser)
+                EditProfileView(user: supabase.currentUser)
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
+            }
+            .alert("Sign Out", isPresented: $showLogoutAlert) {
+                Button("Cancel", role: .cancel) {}
+                Button("Sign Out", role: .destructive) {
+                    handleLogout()
+                }
+            } message: {
+                Text("Are you sure you want to sign out?")
+            }
+            .overlay {
+                if isLoggingOut {
+                    Color.black.opacity(0.5)
+                        .ignoresSafeArea()
+                        .overlay {
+                            ProgressView("Signing out...")
+                                .padding()
+                                .background(Color.cardBackground)
+                                .cornerRadius(12)
+                        }
+                }
+            }
+        }
+    }
+    
+    private func handleLogout() {
+        isLoggingOut = true
+        
+        Task {
+            do {
+                try await supabase.signOut()
+            } catch {
+                print("Error signing out: \(error)")
+            }
+            
+            await MainActor.run {
+                isLoggingOut = false
             }
         }
     }

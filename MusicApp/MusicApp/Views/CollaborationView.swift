@@ -3,7 +3,7 @@ import SwiftUI
 struct CollaborationView: View {
     let collaboration: Collaboration
     @StateObject private var audioManager = AudioManager()
-    @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var supabaseManager: SupabaseManager
     @State private var currentPrompt = ""
     @State private var showInviteSheet = false
     @State private var showLayerOptions = false
@@ -477,5 +477,5 @@ struct RoundedCorner: Shape {
             key: "C Major"
         )
     )
-    .environmentObject(AuthenticationManager())
+    .environmentObject(SupabaseManager.shared)
 }

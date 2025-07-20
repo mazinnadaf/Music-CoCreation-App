@@ -17,13 +17,13 @@ struct User: Identifiable, Codable {
     var friends: [UUID] // Friend user IDs
     var starredTracks: [UUID] // Starred track IDs
     
-    init(username: String, artistName: String) {
-        self.id = UUID()
+    init(id: UUID = UUID(), username: String, artistName: String, bio: String = "", skills: [Skill] = []) {
+        self.id = id
         self.username = username
         self.artistName = artistName
-        self.bio = ""
+        self.bio = bio
         self.avatar = nil
-        self.skills = []
+        self.skills = skills
         self.socialLinks = []
         self.stats = UserStats()
         self.badges = []
