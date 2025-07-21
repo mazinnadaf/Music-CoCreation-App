@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		735CC7822E2DD84600FAB4F2 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 735CC7812E2DD84600FAB4F2 /* GoogleService-Info.plist */; };
-		73BCBE602E2DCE7B00EAD8A1 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 73BCBE5F2E2DCE7800EAD8A1 /* Secrets.plist */; };
 		73BCBE632E2DCF2000EAD8A1 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 73BCBE622E2DCF2000EAD8A1 /* FirebaseAuth */; };
 		73BCBE652E2DCF2000EAD8A1 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 73BCBE642E2DCF2000EAD8A1 /* FirebaseFirestore */; };
 		EB0C2FE52E2DA7ED00A437B6 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = EB0C2FE42E2DA7ED00A437B6 /* FirebaseCore */; };
 		EB0C2FE92E2DA7ED00A437B6 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = EB0C2FE82E2DA7ED00A437B6 /* FirebaseStorage */; };
+		EB0C31112E2E175600A437B6 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = EB0C31102E2E175600A437B6 /* Secrets.plist */; };
+		EB0C31132E2E182200A437B6 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EB0C31122E2E182200A437B6 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,10 +36,8 @@
 		1E9C77472E2318050055EB87 /* MusicApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MusicApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E9C77542E2318070055EB87 /* MusicAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MusicAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E9C775E2E2318070055EB87 /* MusicAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MusicAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		1EE7769D2E298D96009615A8 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.plist; sourceTree = "<group>"; };
-		735CC7812E2DD84600FAB4F2 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "/Users/debbasak/Downloads/GoogleService-Info.plist"; sourceTree = "<absolute>"; };
-		73BCBE5F2E2DCE7800EAD8A1 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.plist; sourceTree = "<group>"; };
-		EB0C2FDF2E2DA61400A437B6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		EB0C31102E2E175600A437B6 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Secrets.plist; sourceTree = "<group>"; };
+		EB0C31122E2E182200A437B6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -82,12 +80,10 @@
 		1E9C773E2E2318040055EB87 = {
 			isa = PBXGroup;
 			children = (
-				73BCBE5F2E2DCE7800EAD8A1 /* Secrets.plist */,
-				1EE7769D2E298D96009615A8 /* Secrets.plist */,
-				EB0C2FDF2E2DA61400A437B6 /* GoogleService-Info.plist */,
+				EB0C31102E2E175600A437B6 /* Secrets.plist */,
+				EB0C31122E2E182200A437B6 /* GoogleService-Info.plist */,
 				1E9C77492E2318050055EB87 /* MusicApp */,
 				1E9C77482E2318050055EB87 /* Products */,
-				735CC7812E2DD84600FAB4F2 /* GoogleService-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -222,8 +218,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				73BCBE602E2DCE7B00EAD8A1 /* Secrets.plist in Resources */,
-				735CC7822E2DD84600FAB4F2 /* GoogleService-Info.plist in Resources */,
+				EB0C31112E2E175600A437B6 /* Secrets.plist in Resources */,
+				EB0C31132E2E182200A437B6 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
