@@ -9,6 +9,8 @@ struct TrackCardView: View {
     let onLike: () -> Void
     let onPlay: () -> Void
     let onJoin: (Track) -> Void
+    var avatarImage: Image? = nil
+    var showPlayButton: Bool = true
     
     var body: some View {
         VStack(spacing: 16) {
@@ -18,10 +20,21 @@ struct TrackCardView: View {
                     .fill(LinearGradient.primaryGradient)
                     .frame(width: 48, height: 48)
                     .overlay(
-                        Text(track.avatar)
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
+                        Group {
+                            if let avatarImage = avatarImage {
+                                avatarImage
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 44, height: 44)
+                                    .clipShape(Circle())
+                            } else {
+                                Image(systemName: "person.crop.circle")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 36, height: 36)
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                        }
                     )
                 
                 // Content
@@ -118,19 +131,21 @@ struct TrackCardView: View {
                     
                     // Actions
                     HStack {
-                        Button(action: onPlay) {
-                            HStack(spacing: 6) {
-                                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                                    .font(.caption)
-                                Text(isPlaying ? "Pause" : "Play")
-                                    .font(.caption)
-                                    .fontWeight(.medium)
+                        if showPlayButton {
+                            Button(action: onPlay) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                                        .font(.caption)
+                                    Text(isPlaying ? "Pause" : "Play")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(LinearGradient.primaryGradient)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(LinearGradient.primaryGradient)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
                         }
                         
                         if track.isOpen {
@@ -216,7 +231,9 @@ struct TrackCardView: View {
         currentTime: "0:00",
         onLike: {},
         onPlay: {},
-        onJoin: { _ in }
+        onJoin: { _ in },
+        avatarImage: nil,
+        showPlayButton: true
     )
     .padding()
     .background(Color.darkBackground)
