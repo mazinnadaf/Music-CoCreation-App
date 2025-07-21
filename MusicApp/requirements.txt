@@ -1,0 +1,113 @@
+# Firebase iOS App Requirements
+# =============================
+
+# DEVELOPMENT ENVIRONMENT
+# ----------------------
+Xcode 15.0+
+iOS 17.0+ (deployment target)
+macOS (required for iOS development)
+Swift 5.9+
+
+# FIREBASE DEPENDENCIES (Swift Package Manager)
+# ---------------------------------------------
+# Add these packages in Xcode: File → Add Packages...
+# Package URL: https://github.com/firebase/firebase-ios-sdk
+# Required packages:
+# - FirebaseAuth
+# - FirebaseFirestore  
+# - FirebaseStorage
+# - FirebaseCore
+
+# FIREBASE PROJECT SETUP
+# ----------------------
+# 1. Create Firebase project at: https://console.firebase.google.com
+# 2. Add iOS app with your bundle ID
+# 3. Download GoogleService-Info.plist
+# 4. Add plist to Xcode project
+
+# FIREBASE SECURITY RULES
+# -----------------------
+
+# Firestore Rules (Database → Rules):
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      match /clips/{clipId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
+
+# Storage Rules (Storage → Rules):
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{userId}/clips/{fileName} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+
+# AUTHENTICATION SETUP
+# --------------------
+# 1. Firebase Console → Authentication
+# 2. Enable Email/Password sign-in method
+# 3. No additional configuration needed
+
+# TESTING CHECKLIST
+# ----------------
+# [ ] App builds without errors
+# [ ] Can create account with email/password
+# [ ] Can log in with created account
+# [ ] Can generate music clips
+# [ ] Clips are saved to Firebase (check console logs)
+# [ ] Clips persist after app restart
+# [ ] Can play saved clips
+
+# EXPECTED CONSOLE LOGS
+# ---------------------
+# When creating clip:
+# [Firebase] 🔄 Starting save for layer: My Song (ID: abc123)
+# [Firebase] ✅ Audio file uploaded successfully
+# [Firebase] ✅ Got download URL: https://storage.googleapis.com/...
+# [Firebase] ✅ Layer metadata saved to Firestore successfully
+
+# When loading clips:
+# [Auth] 🔄 User authenticated: user123
+# [Auth] ✅ User profile loaded successfully
+# [Auth] 📢 Sending userAuthenticated notification
+# [App] 🔄 Loading user clips...
+# [Firebase] 🔄 Loading clips for user: user123
+# [Firebase] 📄 Found 2 clips in Firestore
+# [Firebase] ✅ Loaded clip: My Song
+# [App] ✅ Loaded 2 user clips
+
+# TROUBLESHOOTING
+# ---------------
+# If you see "Missing or insufficient permissions":
+# - Check Firestore rules are updated
+# - Check Storage rules are updated
+# - Wait 1-2 minutes for rules to propagate
+
+# If you see "Object does not exist" in Storage:
+# - This means Storage rules are blocking upload
+# - Update Storage rules (not Firestore rules)
+
+# If no Firebase logs appear:
+# - Check GoogleService-Info.plist is added to project
+# - Check Firebase packages are installed
+# - Check FirebaseApp.configure() is called in app init
+
+# FREE TIER LIMITS
+# ----------------
+# Firebase Storage: 5 GB storage, 1 GB/day downloads
+# Firebase Firestore: 1 GB storage, 50,000 reads/day, 20,000 writes/day
+# Firebase Auth: 10,000 users/month
+# 
+# Typical usage per user:
+# - Audio file: ~2-5 MB per clip
+# - 5 GB free = ~1,000-2,500 clips per user
+# - 1 GB/day downloads = ~200-500 clips played per day 
