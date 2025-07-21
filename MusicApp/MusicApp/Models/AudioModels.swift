@@ -747,6 +747,10 @@ class AudioManager: NSObject, ObservableObject {
                     // Find the player for this item and play it
                     for (layerId, player) in players {
                         if player.currentItem == playerItem {
+                            // Update the playing state to true when we start playing
+                            if let index = layers.firstIndex(where: { $0.id == layerId }) {
+                              layers[index].isPlaying = true
+                            }
                             DispatchQueue.main.async {
                                 player.play()
                                 print("[AudioPlayer] Started playback for layer: \(layerId)")
