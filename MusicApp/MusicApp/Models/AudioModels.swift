@@ -1,16 +1,70 @@
 import SwiftUI
 import Combine
 import AVFoundation
+import FirebaseFirestore
+import FirebaseStorage
+import FirebaseAuth
+
+// MARK: - Layer Data for Firestore Storage
+struct LayerData: Identifiable, Codable {
+    let id: String
+    let name: String
+    let prompt: String
+    let duration: TimeInterval
+    let creatorId: String?
+    let creatorName: String?
+    let bpm: Int
+    let key: String?
+    let instrument: Layer.InstrumentType
+    let createdAt: Date
+    var isPublic: Bool
+    var useCount: Int
+    var audioURLString: String?
+    
+    init(from layer: Layer) {
+        self.id = layer.id
+        self.name = layer.name
+        self.prompt = layer.prompt
+        self.duration = layer.duration
+        self.creatorId = layer.creatorId
+        self.creatorName = layer.creatorName
+        self.bpm = layer.bpm
+        self.key = layer.key
+        self.instrument = layer.instrument
+        self.createdAt = layer.createdAt
+        self.isPublic = layer.isPublic
+        self.useCount = layer.useCount
+        self.audioURLString = layer.audioURLString
+    }
+    
+    func toLayer() -> Layer {
+        return Layer(
+            id: id,
+            name: name,
+            prompt: prompt,
+            duration: duration,
+            creatorId: creatorId,
+            creatorName: creatorName,
+            bpm: bpm,
+            key: key,
+            instrument: instrument,
+            createdAt: createdAt,
+            isPublic: isPublic,
+            useCount: useCount,
+            audioURLString: audioURLString
+        )
+    }
+}
 
 struct Layer: Identifiable, Codable {
-    let id: UUID
+    let id: String
     let name: String
     let prompt: String
     var isPlaying: Bool = false
     let duration: TimeInterval
     var currentTime: TimeInterval = 0.0
     let waveformData: [Float]
-    let creatorId: UUID?
+    let creatorId: String?
     let creatorName: String?
     let bpm: Int
     let key: String?
@@ -21,7 +75,7 @@ struct Layer: Identifiable, Codable {
     let createdAt: Date
     var isPublic: Bool = false
     var useCount: Int = 0
-    var audioURL: URL? // <-- Added for Beatoven audio
+    var audioURLString: String? // Changed from URL to String for Firestore compatibility
     
     enum InstrumentType: String, Codable, CaseIterable {
         case all = "All"
@@ -41,8 +95,8 @@ struct Layer: Identifiable, Codable {
         }
     }
     
-    init(name: String, prompt: String, bpm: Int = 120, instrument: InstrumentType = .all, creatorId: UUID? = nil, creatorName: String? = nil, audioURL: URL? = nil) {
-        self.id = UUID()
+    init(name: String, prompt: String, bpm: Int = 120, instrument: InstrumentType = .all, creatorId: String? = nil, creatorName: String? = nil, audioURL: URL? = nil) {
+        self.id = UUID().uuidString
         self.name = name
         self.prompt = prompt
         self.bpm = bpm
@@ -51,12 +105,39 @@ struct Layer: Identifiable, Codable {
         self.creatorId = creatorId
         self.creatorName = creatorName
         self.createdAt = Date()
-        self.audioURL = audioURL
+        self.audioURLString = audioURL?.absoluteString
         self.duration = 30.0
         // Generate fake waveform data
         self.waveformData = (0..<50).map { i in
             sin(Float(i) * 0.2) * 0.5 + 0.5 + Float.random(in: 0...0.3)
         }
+    }
+    
+    // Additional initializer for loading from Firestore
+    init(id: String, name: String, prompt: String, duration: TimeInterval, creatorId: String?, creatorName: String?, bpm: Int, key: String?, instrument: InstrumentType, createdAt: Date, isPublic: Bool, useCount: Int, audioURLString: String?) {
+        self.id = id
+        self.name = name
+        self.prompt = prompt
+        self.duration = duration
+        self.creatorId = creatorId
+        self.creatorName = creatorName
+        self.bpm = bpm
+        self.key = key
+        self.instrument = instrument
+        self.createdAt = createdAt
+        self.isPublic = isPublic
+        self.useCount = useCount
+        self.audioURLString = audioURLString
+        // Generate fake waveform data for loaded layers
+        self.waveformData = (0..<50).map { i in
+            sin(Float(i) * 0.2) * 0.5 + 0.5 + Float.random(in: 0...0.3)
+        }
+    }
+    
+    // Computed property to get URL from string
+    var audioURL: URL? {
+        guard let urlString = audioURLString else { return nil }
+        return URL(string: urlString)
     }
 }
 
@@ -114,17 +195,17 @@ struct Track: Identifiable, Codable {
 class AudioManager: NSObject, ObservableObject {
     @Published var layers: [Layer] = []
     @Published var isGenerating = false
-    @Published var currentPrompt = "a dreamy synth melody inspired by Tame Impala, 120 BPM"
+    @Published var currentPrompt = "a dreamy synth melody inspired by Tame Impala"
     @Published var showSuggestion = true
     @Published var selectedInstrument: Layer.InstrumentType = .all
     @Published var bpm: String = "120"
     
     private var timer: Timer?
-    private var players: [UUID: AVPlayer] = [:]
-    private var playerObservers: [UUID: Any] = [:]
+    private var players: [String: AVPlayer] = [:]
+    private var playerObservers: [String: Any] = [:]
     
     let suggestedPrompts = [
-        "a dreamy synth melody inspired by Tame Impala, 120 BPM",
+        "a dreamy synth melody inspired by Tame Impala",
         "a punchy lo-fi drum beat",
         "smooth jazz bass line in F major",
         "ambient pad sounds with reverb",
@@ -365,6 +446,19 @@ class AudioManager: NSObject, ObservableObject {
                 await MainActor.run {
                     self.layers.append(newLayer)
                     self.isGenerating = false
+                    
+                    // Auto-save the new layer to Firebase
+                    if let localAudioURL = trackURL {
+                        self.saveLayerToFirebase(newLayer, localAudioURL: localAudioURL) { result in
+                            switch result {
+                            case .success:
+                                print("[Firebase] ✅ Layer saved successfully: \(newLayer.name)")
+                            case .failure(let error):
+                                print("[Firebase] ❌ Failed to save layer: \(error.localizedDescription)")
+                            }
+                        }
+                    }
+                    
                     // Auto-play the new layer
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         self.toggleLayerPlayback(layerId: newLayer.id)
@@ -384,7 +478,7 @@ class AudioManager: NSObject, ObservableObject {
         }
     }
     
-    func toggleLayerPlayback(layerId: UUID) {
+    func toggleLayerPlayback(layerId: String) {
         if let index = layers.firstIndex(where: { $0.id == layerId }) {
             layers[index].isPlaying.toggle()
             if layers[index].isPlaying {
@@ -419,7 +513,7 @@ class AudioManager: NSObject, ObservableObject {
         }
     }
     
-    func deleteLayer(layerId: UUID) {
+    func deleteLayer(layerId: String) {
         // Stop the layer if it's playing
         if let index = layers.firstIndex(where: { $0.id == layerId }) {
             if layers[index].isPlaying {
@@ -434,10 +528,20 @@ class AudioManager: NSObject, ObservableObject {
         players.removeValue(forKey: layerId)
         playerObservers.removeValue(forKey: layerId)
         
+        // Delete from Firebase
+        deleteClipFromFirebase(layerId: layerId) { result in
+            switch result {
+            case .success:
+                print("[Firebase] ✅ Layer deleted from Firebase: \(layerId)")
+            case .failure(let error):
+                print("[Firebase] ❌ Failed to delete layer from Firebase: \(error.localizedDescription)")
+            }
+        }
+        
         print("[AudioPlayer] Deleted layer: \(layerId)")
     }
     
-    private func startTimer(for layerId: UUID) {
+    private func startTimer(for layerId: String) {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor in
@@ -457,7 +561,7 @@ class AudioManager: NSObject, ObservableObject {
         timer = nil
     }
     
-    private func resumeAudio(for layerId: UUID, url: URL) {
+    private func resumeAudio(for layerId: String, url: URL) {
         // If player already exists, just resume
         if let player = players[layerId] {
             print("[AudioPlayer] Resuming existing player for layer: \(layerId)")
@@ -469,14 +573,14 @@ class AudioManager: NSObject, ObservableObject {
         playAudio(for: layerId, url: url)
     }
     
-    private func pausePlayer(for layerId: UUID) {
+    private func pausePlayer(for layerId: String) {
         if let player = players[layerId] {
             player.pause()
             print("[AudioPlayer] Paused player for layer: \(layerId)")
         }
     }
     
-    private func playAudio(for layerId: UUID, url: URL) {
+    private func playAudio(for layerId: String, url: URL) {
         stopPlayer(for: layerId)
         
         print("[AudioPlayer] Attempting to play audio from URL: \(url.absoluteString)")
@@ -578,7 +682,7 @@ class AudioManager: NSObject, ObservableObject {
         }
     }
 
-    private func stopPlayer(for layerId: UUID) {
+    private func stopPlayer(for layerId: String) {
         // Remove observer if exists
         if let observer = playerObservers[layerId], let player = players[layerId] {
             player.removeTimeObserver(observer)
@@ -650,5 +754,151 @@ class AudioManager: NSObject, ObservableObject {
                 }
             }
         }
+    }
+}
+
+extension AudioManager {
+    /// Save a Layer (music clip) to Firestore and upload its audio file to Firebase Storage
+    func saveLayerToFirebase(_ layer: Layer, localAudioURL: URL, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let user = Auth.auth().currentUser else {
+            print("[Firebase] ❌ No authenticated user found")
+            completion(.failure(NSError(domain: "No user", code: -1)))
+            return
+        }
+        
+        print("[Firebase] 🔄 Starting save for layer: \(layer.name) (ID: \(layer.id))")
+        
+        let storage = Storage.storage()
+        let storageRef = storage.reference().child("users/")
+            .child(user.uid)
+            .child("clips/")
+            .child("\(layer.id).wav")
+        
+        // Upload audio file
+        let uploadTask = storageRef.putFile(from: localAudioURL, metadata: nil) { metadata, error in
+            if let error = error {
+                print("[Firebase] ❌ Storage upload failed: \(error.localizedDescription)")
+                completion(.failure(error))
+                return
+            }
+            
+            print("[Firebase] ✅ Audio file uploaded successfully")
+            
+            // Get download URL
+            storageRef.downloadURL { url, error in
+                if let error = error {
+                    print("[Firebase] ❌ Failed to get download URL: \(error.localizedDescription)")
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let downloadURL = url else {
+                    print("[Firebase] ❌ No download URL received")
+                    completion(.failure(NSError(domain: "No download URL", code: -1)))
+                    return
+                }
+                
+                print("[Firebase] ✅ Got download URL: \(downloadURL.absoluteString)")
+                
+                // Convert Layer to LayerData for Firestore storage
+                var layerData = LayerData(from: layer)
+                layerData.audioURLString = downloadURL.absoluteString
+                
+                let db = Firestore.firestore()
+                db.collection("users").document(user.uid)
+                    .collection("clips").document(layer.id)
+                    .setData(try! Firestore.Encoder().encode(layerData)) { error in
+                        if let error = error {
+                            print("[Firebase] ❌ Firestore save failed: \(error.localizedDescription)")
+                            completion(.failure(error))
+                        } else {
+                            print("[Firebase] ✅ Layer metadata saved to Firestore successfully")
+                            completion(.success(()))
+                        }
+                    }
+            }
+        }
+    }
+    
+    /// Load user's saved clips from Firestore
+    func loadUserClips(completion: @escaping (Result<[Layer], Error>) -> Void) {
+        guard let user = Auth.auth().currentUser else {
+            print("[Firebase] ❌ No authenticated user found for loading clips")
+            completion(.failure(NSError(domain: "No user", code: -1)))
+            return
+        }
+        
+        print("[Firebase] 🔄 Loading clips for user: \(user.uid)")
+        
+        let db = Firestore.firestore()
+        db.collection("users").document(user.uid)
+            .collection("clips")
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("[Firebase] ❌ Failed to load clips: \(error.localizedDescription)")
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    print("[Firebase] ✅ No clips found for user")
+                    completion(.success([]))
+                    return
+                }
+                
+                print("[Firebase] 📄 Found \(documents.count) clips in Firestore")
+                
+                var loadedLayers: [Layer] = []
+                for document in documents {
+                    do {
+                        let layerData = try document.data(as: LayerData.self)
+                        let layer = layerData.toLayer()
+                        loadedLayers.append(layer)
+                        print("[Firebase] ✅ Loaded clip: \(layer.name)")
+                    } catch {
+                        print("[Firebase] ❌ Failed to decode layer \(document.documentID): \(error)")
+                    }
+                }
+                
+                print("[Firebase] ✅ Successfully loaded \(loadedLayers.count) clips")
+                completion(.success(loadedLayers))
+            }
+    }
+    
+    /// Delete a clip from Firebase (both Firestore and Storage)
+    func deleteClipFromFirebase(layerId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let user = Auth.auth().currentUser else {
+            completion(.failure(NSError(domain: "No user", code: -1)))
+            return
+        }
+        
+        let db = Firestore.firestore()
+        let storage = Storage.storage()
+        
+        // Delete from Firestore
+        db.collection("users").document(user.uid)
+            .collection("clips").document(layerId)
+            .delete { error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                
+                // Delete from Storage
+                let storageRef = storage.reference().child("users/")
+                    .child(user.uid)
+                    .child("clips/")
+                    .child("\(layerId).wav")
+                
+                storageRef.delete { error in
+                    if let error = error {
+                        print("[Firebase] ❌ Failed to delete audio file: \(error)")
+                        // Still consider it successful if Firestore was deleted
+                        completion(.success(()))
+                    } else {
+                        completion(.success(()))
+                    }
+                }
+            }
     }
 }

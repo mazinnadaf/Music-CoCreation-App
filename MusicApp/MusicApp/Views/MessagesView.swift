@@ -19,7 +19,7 @@ struct MessagesView: View {
                             ForEach(messagingManager.conversations) { conversation in
                                 ConversationRow(
                                     conversation: conversation,
-                                    currentUserId: authManager.currentUser?.id ?? UUID()
+                                    currentUserId: authManager.currentUser?.id ?? ""
                                 ) {
                                     selectedConversation = conversation
                                 }
@@ -82,7 +82,7 @@ struct EmptyMessagesView: View {
 // MARK: - Conversation Row
 struct ConversationRow: View {
     let conversation: Conversation
-    let currentUserId: UUID
+    let currentUserId: String
     let onTap: () -> Void
     
     var body: some View {
@@ -247,7 +247,11 @@ struct ChatView: View {
               !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               let receiverId = conversation.participants.first(where: { $0 != currentUserId }) else { return }
         
-        let content = messageText
+        let newMessage = Message(
+            senderId: currentUserId,
+            receiverId: receiverId,
+            content: messageText
+        )
         messageText = "" // Clear immediately for better UX
         
         Task {
