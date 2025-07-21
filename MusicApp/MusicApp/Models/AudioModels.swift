@@ -114,7 +114,7 @@ struct Track: Identifiable, Codable {
 class AudioManager: NSObject, ObservableObject {
     @Published var layers: [Layer] = []
     @Published var isGenerating = false
-    @Published var currentPrompt = "a dreamy synth melody inspired by Tame Impala, 120 BPM"
+    @Published var currentPrompt = "a dreamy synth melody inspired by Tame Impala"
     @Published var showSuggestion = true
     @Published var selectedInstrument: Layer.InstrumentType = .all
     @Published var bpm: String = "120"
@@ -124,7 +124,7 @@ class AudioManager: NSObject, ObservableObject {
     private var playerObservers: [UUID: Any] = [:]
     
     let suggestedPrompts = [
-        "a dreamy synth melody inspired by Tame Impala, 120 BPM",
+        "a dreamy synth melody inspired by Tame Impala",
         "a punchy lo-fi drum beat",
         "smooth jazz bass line in F major",
         "ambient pad sounds with reverb",
