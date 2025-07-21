@@ -60,6 +60,29 @@ struct ProfileView: View {
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 24)
+
+                    // Log Out Button
+                    Button(action: {
+                        authManager.signOut()
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.right.square")
+                                .foregroundColor(.red)
+                            Text("Log Out")
+                                .foregroundColor(.red)
+                                .fontWeight(.semibold)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.cardBackground)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.red.opacity(0.2), lineWidth: 1)
+                        )
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 24)
                 }
             }
             .background(Color.darkBackground)
