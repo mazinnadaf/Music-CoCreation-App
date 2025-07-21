@@ -84,12 +84,12 @@ struct WelcomeView: View {
                 .frame(width: 140, height: 140)
             
             VStack(spacing: 16) {
-                Text("Welcome to Sona")
+                Text("Welcome to Cantum")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(.primaryText)
                 
-                Text("Create music together, one layer at a time with Sona")
+                Text("Create music together, one layer at a time with Cantum")
                     .font(.title3)
                     .foregroundColor(.secondaryText)
                     .multilineTextAlignment(.center)
@@ -261,7 +261,7 @@ struct FirstCreationView: View {
             }
         }
         .sheet(isPresented: $showShareOptions) {
-            ShareSheet(items: ["Check out my first song on Sona! 🎵"])
+            ShareSheet(items: ["Check out my first song on Cantum! 🎵"])
         }
         .onTapGesture {
             isTextEditorFocused = false

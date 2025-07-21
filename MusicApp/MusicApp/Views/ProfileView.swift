@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var authManager: AuthenticationManager
+    @EnvironmentObject var audioManager: AudioManager
     @State private var selectedTab: ProfileTab = .overview
     @State private var showEditProfile = false
     @State private var showSettings = false
@@ -28,6 +29,7 @@ struct ProfileView: View {
                 VStack(spacing: 0) {
                     // Profile Header
                     ProfileHeaderView(user: authManager.currentUser, showEditProfile: $showEditProfile)
+                        .environmentObject(audioManager)
                     
                     // Tab Selector
                     ScrollView(.horizontal, showsIndicators: false) {

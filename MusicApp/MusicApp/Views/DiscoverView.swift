@@ -27,7 +27,7 @@ struct DiscoverView: View {
                 VStack(spacing: 20) {
                     // Header
                     HStack {
-                        Image("sona-logo")
+                        Image("cantum-logo")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 40, height: 40)

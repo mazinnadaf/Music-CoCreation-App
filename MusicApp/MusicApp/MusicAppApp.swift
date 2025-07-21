@@ -28,7 +28,7 @@ func configureFirebase() {
 }
 
 @main
-struct SonaApp: App {
+struct CantumApp: App {
     init() {
         configureFirebase()
     }

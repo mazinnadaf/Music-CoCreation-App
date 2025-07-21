@@ -19,7 +19,7 @@ struct MockData {
         ),
         Track(
             title: "Punchy Drum Loop",
-            artist: "Sona",
+            artist: "Cantum",
             artistId: "sona_id",
             avatar: "S",
             genre: "Hip-Hop",

@@ -4,6 +4,7 @@ import SwiftUI
 struct ProfileHeaderView: View {
     let user: User?
     @Binding var showEditProfile: Bool
+    @EnvironmentObject var audioManager: AudioManager
     
     var body: some View {
         VStack(spacing: 20) {
@@ -46,19 +47,12 @@ struct ProfileHeaderView: View {
                                 .font(.caption)
                         }
                     }
-                    
-                    if let bio = user?.bio, !bio.isEmpty {
-                        Text(bio)
-                            .font(.body)
-                            .foregroundColor(.secondaryText)
-                            .multilineTextAlignment(.center)
-                            .lineLimit(3)
-                    }
+                    // Remove bio
                 }
                 
                 // Stats
                 HStack(spacing: 40) {
-                    StatView(value: "\(user?.stats.totalTracks ?? 0)", label: "Tracks")
+                    StatView(value: "\(audioManager.layers.count)", label: "Tracks")
                     StatView(value: "\(user?.stats.totalCollaborations ?? 0)", label: "Collabs")
                     StatView(value: "\(user?.stats.producerCredits ?? 0)", label: "Credits")
                 }
@@ -337,8 +331,8 @@ struct BadgeView: View {
 struct EditProfileView: View {
     let user: User?
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var authManager: AuthenticationManager
     @State private var artistName = ""
-    @State private var bio = ""
     @State private var selectedSkills: Set<Skill> = []
     
     var body: some View {
@@ -368,22 +362,6 @@ struct EditProfileView: View {
                             
                             TextField("Enter artist name", text: $artistName)
                                 .textFieldStyle(CustomTextFieldStyle())
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Bio")
-                                .font(.caption)
-                                .foregroundColor(.secondaryText)
-                            
-                            TextEditor(text: $bio)
-                                .frame(minHeight: 100)
-                                .padding(12)
-                                .background(Color.cardBackground)
-                                .cornerRadius(8)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.borderColor, lineWidth: 1)
-                                )
                         }
                         
                         VStack(alignment: .leading, spacing: 12) {
@@ -423,6 +401,12 @@ struct EditProfileView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         // Save changes
+                        if !artistName.isEmpty, var user = authManager.currentUser {
+                            user.artistName = artistName
+                            user.skills = Array(selectedSkills)
+                            authManager.currentUser = user
+                            authManager.completeProfile(artistName: artistName, bio: nil, skills: Array(selectedSkills))
+                        }
                         dismiss()
                     }
                     .foregroundColor(Color.primaryBlue)
@@ -432,7 +416,6 @@ struct EditProfileView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             artistName = user?.artistName ?? ""
-            bio = user?.bio ?? ""
             if let skills = user?.skills {
                 selectedSkills = Set(skills)
             }
