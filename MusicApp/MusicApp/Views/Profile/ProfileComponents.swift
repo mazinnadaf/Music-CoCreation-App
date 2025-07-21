@@ -207,15 +207,48 @@ struct ProfileOverviewView: View {
 
 // MARK: - Profile Tracks
 struct ProfileTracksView: View {
+    @EnvironmentObject var audioManager: AudioManager
+    
     var body: some View {
         VStack(spacing: 16) {
-            Text("Your tracks will appear here")
-                .font(.headline)
-                .foregroundColor(.secondaryText)
-                .padding(.vertical, 60)
-                .frame(maxWidth: .infinity)
-                .background(Color.cardBackground.opacity(0.5))
-                .cornerRadius(12)
+            if audioManager.layers.isEmpty {
+                Text("Your tracks will appear here")
+                    .font(.headline)
+                    .foregroundColor(.secondaryText)
+                    .padding(.vertical, 60)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.cardBackground.opacity(0.5))
+                    .cornerRadius(12)
+            } else {
+                ForEach(audioManager.layers) { layer in
+                    TrackCardView(
+                        track: Track(
+                            title: layer.name,
+                            artist: layer.creatorName ?? "You",
+                            artistId: layer.creatorId ?? "",
+                            avatar: String((layer.creatorName ?? "You").prefix(2)),
+                            genre: "", // Add genre if available
+                            duration: String(format: "%.0f sec", layer.duration),
+                            likes: 0,
+                            collaborators: 0,
+                            isOpen: false,
+                            type: .track,
+                            description: layer.prompt,
+                            layerIds: [layer.id],
+                            bpm: layer.bpm
+                        ),
+                        isLiked: false,
+                        isPlaying: false,
+                        playbackProgress: 0.0,
+                        currentTime: "0:00",
+                        onLike: {},
+                        onPlay: {},
+                        onJoin: { _ in },
+                        avatarImage: nil,
+                        showPlayButton: false
+                    )
+                }
+            }
         }
     }
 }
