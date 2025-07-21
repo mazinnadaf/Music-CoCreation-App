@@ -57,6 +57,7 @@ class FirebaseManager: ObservableObject {
     }
     
     func searchUsers(query: String) async throws -> [User] {
+        // First, try searching by the normalized username field (for both old and new users)
         let snapshot = try await db.collection("users")
             .whereField("username", isGreaterThanOrEqualTo: query.lowercased())
             .whereField("username", isLessThanOrEqualTo: query.lowercased() + "\u{f8ff}")
@@ -67,21 +68,29 @@ class FirebaseManager: ObservableObject {
             for doc in snapshot.documents {
                 group.addTask {
                     let data = doc.data()
-                    return User(
-                        id: data["id"] as? String ?? UUID().uuidString,
-                        username: data["displayUsername"] as? String ?? data["username"] as? String ?? "", // Use displayUsername for proper display
-                        artistName: data["artistName"] as? String ?? "",
-                        bio: data["bio"] as? String ?? "",
-                        avatar: data["avatar"] as? String,
-                        skills: [],
-                        socialLinks: [],
-                        stats: UserStats(),
-                        badges: [],
-                        joinedDate: (data["joinedDate"] as? Timestamp)?.dateValue() ?? Date(),
-                        isVerified: data["isVerified"] as? Bool ?? false,
-                        friends: data["friends"] as? [String] ?? [],
-                        starredTracks: data["starredTracks"] as? [String] ?? []
-                    )
+                    let originalUsername = data["username"] as? String ?? ""
+                    
+                    // Check if this user's username matches the search query (case-insensitive)
+                    let matches = originalUsername.lowercased().contains(query.lowercased())
+                    
+                    if matches {
+                        return User(
+                            id: data["id"] as? String ?? UUID().uuidString,
+                            username: data["displayUsername"] as? String ?? originalUsername, // Use displayUsername if available, fallback to original
+                            artistName: data["artistName"] as? String ?? "",
+                            bio: data["bio"] as? String ?? "",
+                            avatar: data["avatar"] as? String,
+                            skills: [],
+                            socialLinks: [],
+                            stats: UserStats(),
+                            badges: [],
+                            joinedDate: (data["joinedDate"] as? Timestamp)?.dateValue() ?? Date(),
+                            isVerified: data["isVerified"] as? Bool ?? false,
+                            friends: data["friends"] as? [String] ?? [],
+                            starredTracks: data["starredTracks"] as? [String] ?? []
+                        )
+                    }
+                    return nil
                 }
             }
             
