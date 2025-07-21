@@ -15,7 +15,7 @@ struct CreateView: View {
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 80, height: 80)
-                        Text("Create Your Next Hit on Sona")
+                        Text("Create Your Next Hit on Cantum")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundStyle(LinearGradient.primaryGradient)

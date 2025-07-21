@@ -6,6 +6,7 @@ struct DiscoverView: View {
     @State private var tracks: [Track] = MockData.tracks
     @State private var selectedTrack: Track?
     @State private var showCollaborationView = false
+    @State private var showStemCreateView = false
     @State private var isLoadingTracks = false
     @State private var currentlyPlayingTrackId: String? = nil
     @State private var showJoinError = false
@@ -26,7 +27,7 @@ struct DiscoverView: View {
                 VStack(spacing: 20) {
                     // Header
                     HStack {
-                        Image("sona-logo")
+                        Image("cantum-logo")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 40, height: 40)
@@ -116,6 +117,15 @@ struct DiscoverView: View {
                             bpm: track.bpm,
                             key: track.key
                         )
+                    )
+                    .environmentObject(authManager)
+                }
+            }
+            .fullScreenCover(isPresented: $showStemCreateView) {
+                if let track = selectedTrack {
+                    StemCreationView(
+                        originalTrack: track,
+                        audioManager: audioManager
                     )
                     .environmentObject(authManager)
                 }
@@ -225,7 +235,7 @@ struct DiscoverView: View {
             currentTime: audioManager.currentTime(for: track),
             onLike: { toggleLike(trackId: track.id) },
             onPlay: { playTrack(track) },
-            onJoin: { _ in joinTrackAsCollaborator(track) }
+            onJoin: { _ in useStemForTrack(track) } // Always use stem logic
         )
         .overlay(
             // Playing indicator - show when track is loaded (playing or paused)
@@ -237,35 +247,24 @@ struct DiscoverView: View {
         )
     }
     
-    private func joinTrackAsCollaborator(_ track: Track) {
-        // Check if track is open for collaboration
+    private func useStemForTrack(_ track: Track) {
+        // Only allow if track is open
         guard track.isOpen else {
             joinErrorMessage = "This track is not open for collaboration."
             showJoinError = true
             return
         }
-        
-        // Join as collaborator
-        audioManager.joinTrackAsCollaborator(track) { result in
+        // Always use the stem loading logic
+        audioManager.loadLayersForTrack(track) { result in
             switch result {
-            case .success:
-                print("[Discover] Successfully joined track as collaborator")
-                // Navigate to collaboration view
+            case .success(let loadedLayers):
+                print("[Discover] Successfully loaded stem layers")
+                audioManager.layers = loadedLayers
                 selectedTrack = track
-                showCollaborationView = true
-                
-                // Update local track state
-                if let index = tracks.firstIndex(where: { $0.id == track.id }) {
-                    tracks[index].collaborators += 1
-                    // If track reaches max collaborators, close it
-                    if tracks[index].collaborators >= 2 {
-                        tracks[index].isOpen = false
-                    }
-                }
-                
+                showStemCreateView = true
             case .failure(let error):
-                print("[Discover] Failed to join track: \(error)")
-                joinErrorMessage = error.localizedDescription
+                print("[Discover] Failed to load stem: \(error)")
+                joinErrorMessage = "Failed to load stem layers"
                 showJoinError = true
             }
         }

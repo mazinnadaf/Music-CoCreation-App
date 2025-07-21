@@ -29,7 +29,7 @@ func configureFirebase() {
 }
 
 @main
-struct SonaApp: App {
+struct CantumApp: App {
     @StateObject private var authManager = AuthenticationManager()
     @StateObject private var audioManager = AudioManager()
     
