@@ -40,9 +40,22 @@
 		EB0C31122E2E182200A437B6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		1E9C77492E2318050055EB88 /* Exceptions for "MusicApp" folder in "MusicApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 1E9C77462E2318050055EB87 /* MusicApp */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		1E9C77492E2318050055EB87 /* MusicApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1E9C77492E2318050055EB88 /* Exceptions for "MusicApp" folder in "MusicApp" target */,
+			);
 			path = MusicApp;
 			sourceTree = "<group>";
 		};
@@ -405,7 +418,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = X945G76D7R;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MusicApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Cantum;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -434,7 +449,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = X945G76D7R;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MusicApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Cantum;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

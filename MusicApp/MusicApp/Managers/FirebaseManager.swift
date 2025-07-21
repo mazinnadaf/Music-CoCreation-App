@@ -19,6 +19,48 @@ class FirebaseManager: ObservableObject {
     
     // MARK: - User Management
     func saveUser(_ user: User) async throws {
+        // Encode skills
+        let skillsData = user.skills.map { skill in
+            return [
+                "id": skill.id,
+                "name": skill.name,
+                "icon": skill.icon,
+                "level": skill.level.rawValue
+            ]
+        }
+        
+        // Encode social links
+        let socialLinksData = user.socialLinks.map { link in
+            return [
+                "id": link.id,
+                "platform": link.platform.rawValue,
+                "url": link.url
+            ]
+        }
+        
+        // Encode stats
+        let statsData: [String: Any] = [
+            "totalTracks": user.stats.totalTracks,
+            "totalCollaborations": user.stats.totalCollaborations,
+            "totalPlays": user.stats.totalPlays,
+            "totalLikes": user.stats.totalLikes,
+            "producerCredits": user.stats.producerCredits,
+            "weeklyActive": user.stats.weeklyActive,
+            "streak": user.stats.streak
+        ]
+        
+        // Encode badges
+        let badgesData = user.badges.map { badge in
+            return [
+                "id": badge.id,
+                "name": badge.name,
+                "description": badge.description,
+                "icon": badge.icon,
+                "earnedDate": Timestamp(date: badge.earnedDate),
+                "rarity": badge.rarity.rawValue
+            ]
+        }
+        
         let userData: [String: Any] = [
             "id": user.id,
             "username": user.username.lowercased(), // Store username in lowercase for consistent searching
@@ -26,6 +68,10 @@ class FirebaseManager: ObservableObject {
             "artistName": user.artistName,
             "bio": user.bio,
             "avatar": user.avatar ?? "",
+            "skills": skillsData,
+            "socialLinks": socialLinksData,
+            "stats": statsData,
+            "badges": badgesData,
             "joinedDate": Timestamp(date: user.joinedDate),
             "isVerified": user.isVerified,
             "friends": user.friends,
@@ -39,16 +85,65 @@ class FirebaseManager: ObservableObject {
         let doc = try await db.collection("users").document(id).getDocument()
         guard doc.exists, let data = doc.data() else { return nil }
         
+        // Decode skills
+        var skills: [Skill] = []
+        if let skillsData = data["skills"] as? [[String: Any]] {
+            skills = skillsData.compactMap { skillDict in
+                guard let name = skillDict["name"] as? String,
+                      let icon = skillDict["icon"] as? String,
+                      let levelString = skillDict["level"] as? String,
+                      let level = Skill.SkillLevel(rawValue: levelString) else { return nil }
+                return Skill(name: name, icon: icon, level: level)
+            }
+        }
+        
+        // Decode social links
+        var socialLinks: [SocialLink] = []
+        if let socialLinksData = data["socialLinks"] as? [[String: Any]] {
+            socialLinks = socialLinksData.compactMap { linkDict in
+                guard let platformString = linkDict["platform"] as? String,
+                      let platform = SocialLink.SocialPlatform(rawValue: platformString),
+                      let url = linkDict["url"] as? String else { return nil }
+                return SocialLink(platform: platform, url: url)
+            }
+        }
+        
+        // Decode stats
+        var stats = UserStats()
+        if let statsData = data["stats"] as? [String: Any] {
+            stats.totalTracks = statsData["totalTracks"] as? Int ?? 0
+            stats.totalCollaborations = statsData["totalCollaborations"] as? Int ?? 0
+            stats.totalPlays = statsData["totalPlays"] as? Int ?? 0
+            stats.totalLikes = statsData["totalLikes"] as? Int ?? 0
+            stats.producerCredits = statsData["producerCredits"] as? Int ?? 0
+            stats.weeklyActive = statsData["weeklyActive"] as? Bool ?? false
+            stats.streak = statsData["streak"] as? Int ?? 0
+        }
+        
+        // Decode badges
+        var badges: [Badge] = []
+        if let badgesData = data["badges"] as? [[String: Any]] {
+            badges = badgesData.compactMap { badgeDict in
+                guard let name = badgeDict["name"] as? String,
+                      let description = badgeDict["description"] as? String,
+                      let icon = badgeDict["icon"] as? String,
+                      let earnedDate = (badgeDict["earnedDate"] as? Timestamp)?.dateValue(),
+                      let rarityString = badgeDict["rarity"] as? String,
+                      let rarity = Badge.BadgeRarity(rawValue: rarityString) else { return nil }
+                return Badge(name: name, description: description, icon: icon, earnedDate: earnedDate, rarity: rarity)
+            }
+        }
+        
         return User(
             id: data["id"] as? String ?? id,
             username: data["displayUsername"] as? String ?? data["username"] as? String ?? "", // Use displayUsername if available, fallback to username
             artistName: data["artistName"] as? String ?? "",
             bio: data["bio"] as? String ?? "",
             avatar: data["avatar"] as? String,
-            skills: [],
-            socialLinks: [],
-            stats: UserStats(),
-            badges: [],
+            skills: skills,
+            socialLinks: socialLinks,
+            stats: stats,
+            badges: badges,
             joinedDate: (data["joinedDate"] as? Timestamp)?.dateValue() ?? Date(),
             isVerified: data["isVerified"] as? Bool ?? false,
             friends: data["friends"] as? [String] ?? [],
