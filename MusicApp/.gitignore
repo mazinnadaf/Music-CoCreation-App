@@ -1,3 +1,25 @@
 Secrets.plist
 
-Secrets.plist
+# Xcode
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+xcuserdata/
+UserInterfaceState.xcuserstate
+
+# iOS
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.swiftpm/
+Packages/
+*.xcworkspace/xcshareddata/swiftpm/
+
+# CocoaPods
+Pods/
+*.xcworkspace
+!*.xcworkspace/contents.xcworkspacedata
