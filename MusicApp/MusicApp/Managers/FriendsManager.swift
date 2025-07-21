@@ -79,9 +79,10 @@ class FriendsManager: ObservableObject {
         guard let currentUserId = currentUserId else { return }
         
         // Check if friend request already exists
+        let targetUserId = UUID(uuidString: user.id) ?? UUID()
         let existingRequest = friendRequests.first { request in
-            (request.senderId == currentUserId && request.receiverId == UUID(uuidString: user.id)) ||
-            (request.senderId == UUID(uuidString: user.id) && request.receiverId == currentUserId)
+            (request.senderId == currentUserId && request.receiverId == targetUserId) ||
+            (request.senderId == targetUserId && request.receiverId == currentUserId)
         }
         
         if existingRequest != nil {
@@ -92,9 +93,10 @@ class FriendsManager: ObservableObject {
         }
         
         do {
-            try await firebaseManager.sendFriendRequest(to: UUID(uuidString: user.id) ?? UUID(), from: currentUserId)
+            try await firebaseManager.sendFriendRequest(to: targetUserId, from: currentUserId)
             await MainActor.run {
                 self.error = nil
+                print("Friend request sent from \(currentUserId.uuidString) to \(user.id)")
             }
         } catch {
             await MainActor.run {

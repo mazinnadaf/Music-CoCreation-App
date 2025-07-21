@@ -57,11 +57,9 @@ class FirebaseManager: ObservableObject {
     }
     
     func searchUsers(query: String) async throws -> [User] {
-        // First, try searching by the normalized username field (for both old and new users)
+        // Get all users and filter client-side for more flexible searching
         let snapshot = try await db.collection("users")
-            .whereField("username", isGreaterThanOrEqualTo: query.lowercased())
-            .whereField("username", isLessThanOrEqualTo: query.lowercased() + "\u{f8ff}")
-            .limit(to: 20)
+            .limit(to: 100) // Get more users for better search results
             .getDocuments()
         
         return try await withThrowingTaskGroup(of: User?.self) { group in
@@ -69,15 +67,20 @@ class FirebaseManager: ObservableObject {
                 group.addTask {
                     let data = doc.data()
                     let originalUsername = data["username"] as? String ?? ""
+                    let displayUsername = data["displayUsername"] as? String ?? originalUsername
+                    let artistName = data["artistName"] as? String ?? ""
                     
-                    // Check if this user's username matches the search query (case-insensitive)
-                    let matches = originalUsername.lowercased().contains(query.lowercased())
+                    // Check if the query matches username (with @) or artistName (case-insensitive)
+                    let queryWithoutAt = query.hasPrefix("@") ? String(query.dropFirst()) : query
+                    let usernameMatches = originalUsername.lowercased().contains(queryWithoutAt.lowercased()) ||
+                                        displayUsername.lowercased().contains(queryWithoutAt.lowercased())
+                    let artistNameMatches = artistName.lowercased().contains(queryWithoutAt.lowercased())
                     
-                    if matches {
+                    if usernameMatches || artistNameMatches {
                         return User(
-                            id: data["id"] as? String ?? UUID().uuidString,
-                            username: data["displayUsername"] as? String ?? originalUsername, // Use displayUsername if available, fallback to original
-                            artistName: data["artistName"] as? String ?? "",
+                            id: data["id"] as? String ?? doc.documentID,
+                            username: displayUsername,
+                            artistName: artistName,
                             bio: data["bio"] as? String ?? "",
                             avatar: data["avatar"] as? String,
                             skills: [],
