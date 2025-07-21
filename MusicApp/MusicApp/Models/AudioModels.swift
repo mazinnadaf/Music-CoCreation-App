@@ -460,7 +460,7 @@ class AudioManager: NSObject, ObservableObject {
                 await MainActor.run {
                     self.layers.append(newLayer)
                     self.isGenerating = false
-                    
+
                     // Auto-save the new layer to both user's collection and public collection
                     if let localAudioURL = trackURL {
                         // Save to user's collection
@@ -472,11 +472,18 @@ class AudioManager: NSObject, ObservableObject {
                                 print("[Firebase] ❌ Failed to save layer to user: \(error.localizedDescription)")
                             }
                         }
-                        
-                        // Also save to public collection immediately
-                        // (This will be done after the extension is properly closed)
+
+                        // Also save to public collection
+                        self.saveLayerToPublicCollection(newLayer, localAudioURL: localAudioURL) { result in
+                            switch result {
+                            case .success:
+                                print("[Firebase] ✅ Layer saved to public collection: \(newLayer.name)")
+                            case .failure(let error):
+                                print("[Firebase] ❌ Failed to save layer to public: \(error.localizedDescription)")
+                            }
+                        }
                     }
-                    
+
                     // Auto-play the new layer
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         self.toggleLayerPlayback(layerId: newLayer.id)
