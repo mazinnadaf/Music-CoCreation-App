@@ -76,10 +76,19 @@ class FriendsManager: ObservableObject {
     }
     
     func sendFriendRequest(to user: User) async {
-        guard let currentUserId = currentUserId else { return }
+        guard let currentUserId = currentUserId else { 
+            print("❌ No current user ID available")
+            return 
+        }
         
         // Check if friend request already exists
         let targetUserId = UUID(uuidString: user.id) ?? UUID()
+        print("👤 Sending friend request:")
+        print("   Current user ID: \(currentUserId.uuidString)")
+        print("   Target user ID: \(user.id)")
+        print("   Target username: \(user.username)")
+        print("   Target UUID: \(targetUserId.uuidString)")
+        
         let existingRequest = friendRequests.first { request in
             (request.senderId == currentUserId && request.receiverId == targetUserId) ||
             (request.senderId == targetUserId && request.receiverId == currentUserId)
@@ -96,11 +105,12 @@ class FriendsManager: ObservableObject {
             try await firebaseManager.sendFriendRequest(to: targetUserId, from: currentUserId)
             await MainActor.run {
                 self.error = nil
-                print("Friend request sent from \(currentUserId.uuidString) to \(user.id)")
+                print("✅ Friend request sent from \(currentUserId.uuidString) to \(user.id)")
             }
         } catch {
             await MainActor.run {
                 self.error = "Failed to send friend request: \(error.localizedDescription)"
+                print("❌ Error sending friend request: \(error)")
             }
         }
     }

@@ -123,7 +123,13 @@ class FirebaseManager: ObservableObject {
             "sentAt": Timestamp(date: friendRequest.sentAt)
         ]
         
+        print("🔥 Sending friend request:")
+        print("   From: \(currentUserId.uuidString)")
+        print("   To: \(userId.uuidString)")
+        print("   Request ID: \(friendRequest.id.uuidString)")
+        
         try await db.collection("friendRequests").document(friendRequest.id.uuidString).setData(requestData)
+        print("✅ Friend request saved to Firestore")
     }
     
     func respondToFriendRequest(requestId: UUID, accept: Bool) async throws {
@@ -192,11 +198,23 @@ class FirebaseManager: ObservableObject {
     }
     
     func loadFriendRequests(for userId: UUID) {
+        print("🔍 Loading friend requests for user: \(userId.uuidString)")
+        
         db.collection("friendRequests")
             .whereField("receiverId", isEqualTo: userId.uuidString)
             .whereField("status", isEqualTo: FriendRequestStatus.pending.rawValue)
             .addSnapshotListener { [weak self] snapshot, error in
-                guard let documents = snapshot?.documents else { return }
+                if let error = error {
+                    print("❌ Error loading friend requests: \(error)")
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else { 
+                    print("⚠️ No documents found in friend requests snapshot")
+                    return 
+                }
+                
+                print("📄 Found \(documents.count) friend request documents")
                 
                 Task {
                     do {
@@ -204,22 +222,29 @@ class FirebaseManager: ObservableObject {
                             for doc in documents {
                                 group.addTask {
                                     let data = doc.data()
+                                    print("📋 Processing friend request document: \(doc.documentID)")
+                                    print("   Data: \(data)")
+                                    
                                     guard let senderIdString = data["senderId"] as? String,
                                           let receiverIdString = data["receiverId"] as? String,
                                           let senderId = UUID(uuidString: senderIdString),
                                           let receiverId = UUID(uuidString: receiverIdString),
                                           let statusString = data["status"] as? String,
                                           let status = FriendRequestStatus(rawValue: statusString) else {
+                                        print("❌ Invalid friend request data in document: \(doc.documentID)")
                                         return nil
                                     }
                                     
-                                    return FriendRequest(
+                                    let request = FriendRequest(
                                         id: UUID(uuidString: data["id"] as? String ?? "") ?? UUID(),
                                         senderId: senderId,
                                         receiverId: receiverId,
                                         status: status,
                                         sentAt: (data["sentAt"] as? Timestamp)?.dateValue() ?? Date()
                                     )
+                                    
+                                    print("✅ Successfully parsed friend request: \(request.id)")
+                                    return request
                                 }
                             }
                             
@@ -232,11 +257,13 @@ class FirebaseManager: ObservableObject {
                             return results
                         }
                         
+                        print("📥 Final friend requests count: \(requests.count)")
+                        
                         await MainActor.run {
                             self?.friendRequests = requests
                         }
                     } catch {
-                        print("Error loading friend requests: \(error)")
+                        print("❌ Error loading friend requests: \(error)")
                     }
                 }
             }
