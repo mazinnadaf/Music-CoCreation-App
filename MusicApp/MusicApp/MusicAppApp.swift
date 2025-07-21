@@ -1,4 +1,5 @@
 import SwiftUI
+import Firebase
 import FirebaseCore
 
 func configureFirebase() {
@@ -17,7 +18,7 @@ func configureFirebase() {
     
     print("Firebase configuring with Project ID: \(projectId)")
     print("Bundle ID: \(bundleId)")
-    
+ 
     FirebaseApp.configure()
     
     if FirebaseApp.app() == nil {
@@ -29,12 +30,13 @@ func configureFirebase() {
 
 @main
 struct SonaApp: App {
-    init() {
-        configureFirebase()
-    }
     @StateObject private var authManager = AuthenticationManager()
     @StateObject private var audioManager = AudioManager()
     
+    init() {
+        configureFirebase()
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()

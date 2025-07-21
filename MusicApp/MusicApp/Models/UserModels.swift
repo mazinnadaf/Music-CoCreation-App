@@ -236,7 +236,7 @@ struct Band: Identifiable, Codable {
 }
 
 // MARK: - Message Models
-struct Message: Identifiable, Codable {
+struct Message: Identifiable, Codable, Equatable {
     let id: UUID
     let senderId: String
     let receiverId: String
@@ -260,6 +260,28 @@ struct Message: Identifiable, Codable {
         self.isRead = false
         self.messageType = messageType
     }
+    
+    // Firebase data initializer
+    init(id: UUID, senderId: String, receiverId: String, content: String, timestamp: Date, isRead: Bool, messageType: MessageType) {
+        self.id = id
+        self.senderId = senderId
+        self.receiverId = receiverId
+        self.content = content
+        self.timestamp = timestamp
+        self.isRead = isRead
+        self.messageType = messageType
+    }
+    
+    // Equatable conformance
+    static func == (lhs: Message, rhs: Message) -> Bool {
+        return lhs.id == rhs.id &&
+               lhs.senderId == rhs.senderId &&
+               lhs.receiverId == rhs.receiverId &&
+               lhs.content == rhs.content &&
+               lhs.timestamp == rhs.timestamp &&
+               lhs.isRead == rhs.isRead &&
+               lhs.messageType == rhs.messageType
+    }
 }
 
 struct Conversation: Identifiable, Codable {
@@ -276,6 +298,29 @@ struct Conversation: Identifiable, Codable {
         self.lastMessage = nil
         self.unreadCount = 0
     }
+}
+
+// MARK: - Friend Request Models
+struct FriendRequest: Identifiable, Codable {
+    let id: UUID
+    let senderId: UUID
+    let receiverId: UUID
+    var status: FriendRequestStatus
+    let sentAt: Date
+    
+    init(id: UUID = UUID(), senderId: UUID, receiverId: UUID, status: FriendRequestStatus, sentAt: Date = Date()) {
+        self.id = id
+        self.senderId = senderId
+        self.receiverId = receiverId
+        self.status = status
+        self.sentAt = sentAt
+    }
+}
+
+enum FriendRequestStatus: String, Codable {
+    case pending = "pending"
+    case accepted = "accepted"
+    case declined = "declined"
 }
 
 // MARK: - Notification Models

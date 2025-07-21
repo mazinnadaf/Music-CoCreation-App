@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MessagesView: View {
-    @State private var conversations: [Conversation] = []
+    @StateObject private var messagingManager = MessagingManager()
     @State private var selectedConversation: Conversation?
     @State private var showNewMessage = false
     @EnvironmentObject var authManager: AuthenticationManager
@@ -11,12 +11,12 @@ struct MessagesView: View {
             ZStack {
                 Color.darkBackground.ignoresSafeArea()
                 
-                if conversations.isEmpty {
+                if messagingManager.conversations.isEmpty {
                     EmptyMessagesView()
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 0) {
-                            ForEach(conversations) { conversation in
+                            ForEach(messagingManager.conversations) { conversation in
                                 ConversationRow(
                                     conversation: conversation,
                                     currentUserId: authManager.currentUser?.id ?? ""
@@ -47,6 +47,11 @@ struct MessagesView: View {
             .sheet(item: $selectedConversation) { conversation in
                 ChatView(conversation: conversation)
                     .environmentObject(authManager)
+            }
+            .onAppear {
+                if let currentUser = authManager.currentUser {
+                    messagingManager.initialize(with: UUID(uuidString: currentUser.id) ?? UUID())
+                }
             }
         }
     }
@@ -145,60 +150,17 @@ struct ConversationRow: View {
 struct ChatView: View {
     let conversation: Conversation
     @State private var messageText = ""
-    @State private var messages: [Message] = []
+    @StateObject private var messagingManager = MessagingManager()
     @EnvironmentObject var authManager: AuthenticationManager
     @Environment(\.dismiss) var dismiss
     @FocusState private var isMessageFieldFocused: Bool
+    @State private var conversationId: String = ""
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // Messages List
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            ForEach(messages) { message in
-                                MessageBubble(
-                                    message: message,
-                                    isFromCurrentUser: message.senderId == authManager.currentUser?.id
-                                )
-                                .id(message.id)
-                            }
-                        }
-                        .padding()
-                    }
-                    .background(Color.darkBackground)
-                    .onAppear {
-                        if let lastMessage = messages.last {
-                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
-                        }
-                    }
-                    .onTapGesture {
-                        isMessageFieldFocused = false
-                    }
-                }
-                
-                // Message Input
-                HStack(spacing: 12) {
-                    TextField("Type a message...", text: $messageText)
-                        .padding(.horizontal)
-                        .padding(.vertical, 10)
-                        .background(Color.cardBackground)
-                        .cornerRadius(20)
-                        .foregroundColor(.primaryText)
-                        .focused($isMessageFieldFocused)
-                    
-                    Button(action: sendMessage) {
-                        Image(systemName: "paperplane.fill")
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(LinearGradient.primaryGradient)
-                            .clipShape(Circle())
-                    }
-                    .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
-                .padding()
-                .background(Color.cardBackground)
+                messagesList
+                messageInputView
             }
             .navigationTitle("Chat")
             .navigationBarTitleDisplayMode(.inline)
@@ -208,14 +170,7 @@ struct ChatView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: 16) {
-                        Button(action: {}) {
-                            Image(systemName: "phone")
-                        }
-                        Button(action: {}) {
-                            Image(systemName: "video")
-                        }
-                    }
+                    chatToolbarButtons
                 }
             }
         }
@@ -224,22 +179,96 @@ struct ChatView: View {
         }
     }
     
+    private var messagesList: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(messagingManager.currentMessages) { message in
+                        let isFromCurrentUser = message.senderId == authManager.currentUser?.id
+                        MessageBubble(
+                            message: message,
+                            isFromCurrentUser: isFromCurrentUser
+                        )
+                        .id(message.id)
+                    }
+                }
+                .padding()
+            }
+            .background(Color.darkBackground)
+            .onChange(of: messagingManager.currentMessages) { messages in
+                if let lastMessage = messages.last {
+                    withAnimation {
+                        proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                    }
+                }
+            }
+            .onTapGesture {
+                isMessageFieldFocused = false
+            }
+        }
+    }
+    
+    private var messageInputView: some View {
+        HStack(spacing: 12) {
+            TextField("Type a message...", text: $messageText)
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+                .background(Color.cardBackground)
+                .cornerRadius(20)
+                .foregroundColor(.primaryText)
+                .focused($isMessageFieldFocused)
+            
+            Button(action: sendMessage) {
+                Image(systemName: "paperplane.fill")
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(LinearGradient.primaryGradient)
+                    .clipShape(Circle())
+            }
+            .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
+        .padding()
+        .background(Color.cardBackground)
+    }
+    
+    private var chatToolbarButtons: some View {
+        HStack(spacing: 16) {
+            Button(action: {}) {
+                Image(systemName: "phone")
+            }
+            Button(action: {}) {
+                Image(systemName: "video")
+            }
+        }
+    }
+    
     private func sendMessage() {
         guard let currentUserId = authManager.currentUser?.id,
-              !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+              !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let receiverId = conversation.participants.first(where: { $0 != currentUserId }) else { return }
         
-        let newMessage = Message(
-            senderId: currentUserId,
-            receiverId: conversation.participants.first { $0 != currentUserId } ?? "",
-            content: messageText
-        )
+        let messageContent = messageText
+        messageText = "" // Clear immediately for better UX
         
-        messages.append(newMessage)
-        messageText = ""
+        Task {
+            await messagingManager.sendMessage(
+                content: messageContent,
+                to: UUID(uuidString: receiverId) ?? UUID(),
+                in: conversationId
+            )
+        }
     }
     
     private func loadMessages() {
-        messages = conversation.messages
+        if let currentUserId = authManager.currentUser?.id {
+            messagingManager.initialize(with: UUID(uuidString: currentUserId) ?? UUID())
+            
+            // Generate conversation ID from participants
+            let sortedParticipants = conversation.participants.sorted()
+            conversationId = sortedParticipants.joined(separator: "_")
+            
+            messagingManager.loadMessages(for: conversationId)
+        }
     }
 }
 
