@@ -7,16 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1EE7769E2E298D9F009615A8 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1EE7769D2E298D96009615A8 /* Secrets.plist */; };
 		735CC7822E2DD84600FAB4F2 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 735CC7812E2DD84600FAB4F2 /* GoogleService-Info.plist */; };
 		73BCBE602E2DCE7B00EAD8A1 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 73BCBE5F2E2DCE7800EAD8A1 /* Secrets.plist */; };
 		73BCBE632E2DCF2000EAD8A1 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 73BCBE622E2DCF2000EAD8A1 /* FirebaseAuth */; };
 		73BCBE652E2DCF2000EAD8A1 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 73BCBE642E2DCF2000EAD8A1 /* FirebaseFirestore */; };
-		EB0C2FAC2E2DA57A00A437B6 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = EB0C2FAB2E2DA57600A437B6 /* Secrets.plist */; };
-		EB0C2FE02E2DA61400A437B6 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EB0C2FDF2E2DA61400A437B6 /* GoogleService-Info.plist */; };
-		EB0C2FE32E2DA7ED00A437B6 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = EB0C2FE22E2DA7ED00A437B6 /* FirebaseAuth */; };
 		EB0C2FE52E2DA7ED00A437B6 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = EB0C2FE42E2DA7ED00A437B6 /* FirebaseCore */; };
-		EB0C2FE72E2DA7ED00A437B6 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = EB0C2FE62E2DA7ED00A437B6 /* FirebaseFirestore */; };
 		EB0C2FE92E2DA7ED00A437B6 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = EB0C2FE82E2DA7ED00A437B6 /* FirebaseStorage */; };
 /* End PBXBuildFile section */
 
@@ -44,7 +39,6 @@
 		1EE7769D2E298D96009615A8 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.plist; sourceTree = "<group>"; };
 		735CC7812E2DD84600FAB4F2 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "/Users/debbasak/Downloads/GoogleService-Info.plist"; sourceTree = "<absolute>"; };
 		73BCBE5F2E2DCE7800EAD8A1 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.plist; sourceTree = "<group>"; };
-		EB0C2FAB2E2DA57600A437B6 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.plist; sourceTree = "<group>"; };
 		EB0C2FDF2E2DA61400A437B6 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 

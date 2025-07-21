@@ -5,6 +5,7 @@ struct MockData {
         Track(
             title: "Midnight Dreams",
             artist: "Alex Chen",
+            artistId: "alex_chen_id",
             avatar: "AC",
             genre: "Lo-Fi",
             duration: "2:34",
@@ -12,11 +13,14 @@ struct MockData {
             collaborators: 3,
             isOpen: false,
             type: .track,
-            description: nil
+            description: nil,
+            layerIds: [],
+            bpm: 120
         ),
         Track(
             title: "Punchy Drum Loop",
             artist: "beatmaker_sam",
+            artistId: "beatmaker_sam_id",
             avatar: "BS",
             genre: "Hip-Hop",
             duration: "0:16",
@@ -24,11 +28,14 @@ struct MockData {
             collaborators: 0,
             isOpen: true,
             type: .stem,
-            description: "Need someone to add melody and bass to this groove"
+            description: "Need someone to add melody and bass to this groove",
+            layerIds: [],
+            bpm: 90
         ),
         Track(
             title: "Finish My Synthwave Track",
             artist: "RetroWave Studios",
+            artistId: "retrowave_studios_id",
             avatar: "RW",
             genre: "Synthwave",
             duration: "1:45",
@@ -36,11 +43,14 @@ struct MockData {
             collaborators: 2,
             isOpen: true,
             type: .collaboration,
-            description: "Looking for a vocalist to complete this 80s-inspired track"
+            description: "Looking for a vocalist to complete this 80s-inspired track",
+            layerIds: [],
+            bpm: 110
         ),
         Track(
             title: "Ocean Waves",
             artist: "Luna Martinez",
+            artistId: "luna_martinez_id",
             avatar: "LM",
             genre: "Ambient",
             duration: "3:12",
@@ -48,11 +58,14 @@ struct MockData {
             collaborators: 1,
             isOpen: false,
             type: .track,
-            description: nil
+            description: nil,
+            layerIds: [],
+            bpm: 85
         ),
         Track(
             title: "Smooth Jazz Bass",
             artist: "JazzCat",
+            artistId: "jazzcat_id",
             avatar: "JC",
             genre: "Jazz",
             duration: "0:32",
@@ -60,11 +73,14 @@ struct MockData {
             collaborators: 0,
             isOpen: true,
             type: .stem,
-            description: "Perfect foundation for a chill jazz track"
+            description: "Perfect foundation for a chill jazz track",
+            layerIds: [],
+            bpm: 68
         ),
         Track(
             title: "Electric Summer",
             artist: "DJ Voltage",
+            artistId: "dj_voltage_id",
             avatar: "DV",
             genre: "Electronic",
             duration: "3:45",
@@ -72,11 +88,14 @@ struct MockData {
             collaborators: 4,
             isOpen: false,
             type: .track,
-            description: nil
+            description: nil,
+            layerIds: [],
+            bpm: 128
         ),
         Track(
             title: "Trap Beat Foundation",
             artist: "808 Master",
+            artistId: "808_master_id",
             avatar: "8M",
             genre: "Trap",
             duration: "0:24",
@@ -84,11 +103,14 @@ struct MockData {
             collaborators: 0,
             isOpen: true,
             type: .stem,
-            description: "Hard-hitting 808s ready for your melody"
+            description: "Hard-hitting 808s ready for your melody",
+            layerIds: [],
+            bpm: 140
         ),
         Track(
             title: "Need a Guitar Solo",
             artist: "Rock Revival",
+            artistId: "rock_revival_id",
             avatar: "RR",
             genre: "Rock",
             duration: "2:15",
@@ -96,7 +118,9 @@ struct MockData {
             collaborators: 1,
             isOpen: true,
             type: .collaboration,
-            description: "Classic rock track missing that epic guitar solo"
+            description: "Classic rock track missing that epic guitar solo",
+            layerIds: [],
+            bpm: 100
         )
     ]
 }

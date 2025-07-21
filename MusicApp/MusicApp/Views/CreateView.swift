@@ -3,6 +3,7 @@ import SwiftUI
 struct CreateView: View {
     @EnvironmentObject var audioManager: AudioManager
     @FocusState private var isTextFieldFocused: Bool
+    @State private var showPublishSheet = false
     
     var body: some View {
         NavigationView {
@@ -257,6 +258,22 @@ struct CreateView: View {
                         AudioPlayerView(layer: layer, isLoading: false)
                     }
                     
+                    // Publish Button
+                    if !audioManager.layers.isEmpty {
+                        Button(action: {
+                            showPublishSheet = true
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.up.circle.fill")
+                                Text("Publish to Discover")
+                            }
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(GradientButtonStyle())
+                        .padding(.top, 8)
+                    }
+                    
                     // Collaboration CTA
                     if audioManager.layers.count >= 2 {
                         CollaborationCTAView()
@@ -268,6 +285,10 @@ struct CreateView: View {
             .navigationBarHidden(true)
             .onTapGesture {
                 isTextFieldFocused = false
+            }
+            .sheet(isPresented: $showPublishSheet) {
+                PublishTrackSheet()
+                    .environmentObject(audioManager)
             }
         }
     }

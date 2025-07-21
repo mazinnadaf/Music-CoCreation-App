@@ -3,6 +3,9 @@ import SwiftUI
 struct TrackCardView: View {
     let track: Track
     let isLiked: Bool
+    let isPlaying: Bool
+    let playbackProgress: Double  // 0.0 to 1.0
+    let currentTime: String      // e.g., "1:23"
     let onLike: () -> Void
     let onPlay: () -> Void
     let onJoin: (Track) -> Void
@@ -83,13 +86,43 @@ struct TrackCardView: View {
                         }
                     }
                     
+                    // Progress bar when playing
+                    if isPlaying {
+                        VStack(spacing: 4) {
+                            GeometryReader { geometry in
+                                ZStack(alignment: .leading) {
+                                    // Background
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(Color.borderColor)
+                                        .frame(height: 4)
+                                    
+                                    // Progress
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(Color.primaryBlue)
+                                        .frame(width: geometry.size.width * playbackProgress, height: 4)
+                                }
+                            }
+                            .frame(height: 4)
+                            
+                            HStack {
+                                Text(currentTime)
+                                    .font(.caption2)
+                                    .foregroundColor(.secondaryText)
+                                Spacer()
+                                Text(track.duration)
+                                    .font(.caption2)
+                                    .foregroundColor(.secondaryText)
+                            }
+                        }
+                    }
+                    
                     // Actions
                     HStack {
                         Button(action: onPlay) {
                             HStack(spacing: 6) {
-                                Image(systemName: "play.fill")
+                                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                                     .font(.caption)
-                                Text("Play")
+                                Text(isPlaying ? "Pause" : "Play")
                                     .font(.caption)
                                     .fontWeight(.medium)
                             }
@@ -164,6 +197,9 @@ struct TrackCardView: View {
     TrackCardView(
         track: MockData.tracks.first!,
         isLiked: false,
+        isPlaying: false,
+        playbackProgress: 0.0,
+        currentTime: "0:00",
         onLike: {},
         onPlay: {},
         onJoin: { _ in }
