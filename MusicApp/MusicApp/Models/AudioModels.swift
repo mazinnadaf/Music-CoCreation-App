@@ -484,17 +484,6 @@ class AudioManager: NSObject, ObservableObject {
                         }
                     }
 
-                    // Auto-play the new layer
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        self.toggleLayerPlayback(layerId: newLayer.id)
-                    }
-                    // Show next suggestion
-                    if self.layers.count == 1 {
-                        self.currentPrompt = self.suggestedPrompts[1]
-                        self.showSuggestion = true
-                    } else {
-                        self.currentPrompt = ""
-                    }
                 }
             } catch {
                 print("Error in createLayer: \(error)")
@@ -987,7 +976,7 @@ extension AudioManager {
                 duration: durationString,
                 likes: 0,
                 collaborators: isStem ? 0 : 1, // Stems start with 0 collaborators
-                isOpen: allowCollaboration,
+                isOpen: isStem ? true : allowCollaboration, // Stems are always open
                 type: trackType,
                 description: description,
                 layerIds: layerIds, // Use existing layer IDs
@@ -1213,11 +1202,13 @@ extension AudioManager {
                 return
             }
             
-            let existingCount = snapshot?.documents.count ?? 0
+            _ = snapshot?.documents.count ?? 0 // use _ instead of assigning to existingCount
             
             // Check if already joined
             if snapshot?.documents.first(where: { $0.documentID == user.uid }) != nil {
-                completion(.failure(NSError(domain: "Already joined", code: -1, userInfo: [NSLocalizedDescriptionKey: "You've already joined this track"])))
+                // User already joined - this is OK, just complete successfully
+                print("[Firebase] ℹ️ User already joined this track, allowing access")
+                completion(.success(()))
                 return
             }
             
@@ -1335,8 +1326,8 @@ extension AudioManager {
     
     /// Copy layers to public storage for discover usage
     func copyLayersToPublicStorage(_ layers: [Layer], trackId: String, completion: @escaping ([String]) -> Void) {
-        let storage = Storage.storage()
-        let db = Firestore.firestore()
+        _ = Storage.storage()
+        _ = Firestore.firestore()
         let group = DispatchGroup()
         var publicLayerIds: [String] = []
         
