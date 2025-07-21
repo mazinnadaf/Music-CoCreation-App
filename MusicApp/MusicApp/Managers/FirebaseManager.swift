@@ -21,7 +21,8 @@ class FirebaseManager: ObservableObject {
     func saveUser(_ user: User) async throws {
         let userData: [String: Any] = [
             "id": user.id,
-            "username": user.username,
+            "username": user.username.lowercased(), // Store username in lowercase for consistent searching
+            "displayUsername": user.username, // Store original username for display
             "artistName": user.artistName,
             "bio": user.bio,
             "avatar": user.avatar ?? "",
@@ -40,7 +41,7 @@ class FirebaseManager: ObservableObject {
         
         return User(
             id: data["id"] as? String ?? id,
-            username: data["username"] as? String ?? "",
+            username: data["displayUsername"] as? String ?? data["username"] as? String ?? "", // Use displayUsername if available, fallback to username
             artistName: data["artistName"] as? String ?? "",
             bio: data["bio"] as? String ?? "",
             avatar: data["avatar"] as? String,
@@ -68,7 +69,7 @@ class FirebaseManager: ObservableObject {
                     let data = doc.data()
                     return User(
                         id: data["id"] as? String ?? UUID().uuidString,
-                        username: data["username"] as? String ?? "",
+                        username: data["displayUsername"] as? String ?? data["username"] as? String ?? "", // Use displayUsername for proper display
                         artistName: data["artistName"] as? String ?? "",
                         bio: data["bio"] as? String ?? "",
                         avatar: data["avatar"] as? String,

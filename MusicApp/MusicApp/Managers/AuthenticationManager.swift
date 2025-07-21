@@ -85,20 +85,23 @@ class AuthenticationManager: ObservableObject {
                 friends: [],
                 starredTracks: []
             )
-            self?.saveUserToFirestore(newUser) { firestoreResult in
-                DispatchQueue.main.async {
-                    switch firestoreResult {
-                    case .success:
+            // Use FirebaseManager for proper username normalization
+            Task {
+                do {
+                    try await FirebaseManager.shared.saveUser(newUser)
+                    DispatchQueue.main.async {
                         self?.currentUser = newUser
                         // Since user provided artistName during signup, mark as completed
                         self?.hasCompletedOnboarding = !artistName.isEmpty
                         self?.authState = .authenticated(newUser)
                         print("✅ User signed up successfully, hasCompletedOnboarding: \(self?.hasCompletedOnboarding ?? false)")
                         completion(.success(()))
-                    case .failure(let firestoreError):
-                        print("❌ Failed to save user to Firestore: \(firestoreError.localizedDescription)")
+                    }
+                } catch {
+                    DispatchQueue.main.async {
+                        print("❌ Failed to save user to Firestore: \(error.localizedDescription)")
                         self?.authState = .unauthenticated
-                        completion(.failure(firestoreError))
+                        completion(.failure(error))
                     }
                 }
             }
@@ -169,20 +172,29 @@ class AuthenticationManager: ObservableObject {
                 return
             }
             // Fetch user profile from Firestore
-            self?.fetchUserFromFirestore(uid: user.uid) { fetchResult in
-                DispatchQueue.main.async {
-                    switch fetchResult {
-                    case .success(let userModel):
-                        self?.currentUser = userModel
-                        // Determine if user has completed onboarding
-                        self?.hasCompletedOnboarding = !userModel.artistName.isEmpty
-                        self?.authState = .authenticated(userModel)
-                        print("✅ User logged in successfully, hasCompletedOnboarding: \(self?.hasCompletedOnboarding ?? false)")
-                        completion(.success(()))
-                    case .failure(let fetchError):
-                        print("❌ Failed to fetch user from Firestore: \(fetchError.localizedDescription)")
+            Task {
+                do {
+                    if let userModel = try await FirebaseManager.shared.getUser(by: user.uid) {
+                        DispatchQueue.main.async {
+                            self?.currentUser = userModel
+                            // Determine if user has completed onboarding
+                            self?.hasCompletedOnboarding = !userModel.artistName.isEmpty
+                            self?.authState = .authenticated(userModel)
+                            print("✅ User logged in successfully, hasCompletedOnboarding: \(self?.hasCompletedOnboarding ?? false)")
+                            completion(.success(()))
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            print("❌ No user data found")
+                            self?.authState = .unauthenticated
+                            completion(.failure(NSError(domain: "No user data found", code: -1)))
+                        }
+                    }
+                } catch {
+                    DispatchQueue.main.async {
+                        print("❌ Failed to fetch user from Firestore: \(error.localizedDescription)")
                         self?.authState = .unauthenticated
-                        completion(.failure(fetchError))
+                        completion(.failure(error))
                     }
                 }
             }

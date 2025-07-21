@@ -29,6 +29,7 @@ struct FriendsView: View {
                     // Friend Requests
                     FriendRequestsView(
                         requests: friendsManager.friendRequests,
+                        friendsManager: friendsManager,
                         onAccept: { request in
                             Task {
                                 await friendsManager.acceptFriendRequest(request)
@@ -106,6 +107,7 @@ struct FriendsListView: View {
 // MARK: - Friend Requests View
 struct FriendRequestsView: View {
     let requests: [FriendRequest]
+    let friendsManager: FriendsManager
     let onAccept: (FriendRequest) -> Void
     let onDecline: (FriendRequest) -> Void
     
@@ -118,6 +120,7 @@ struct FriendRequestsView: View {
                     ForEach(requests) { request in
                         FriendRequestCardView(
                             request: request,
+                            friendsManager: friendsManager,
                             onAccept: { onAccept(request) },
                             onDecline: { onDecline(request) }
                         )
@@ -266,6 +269,7 @@ struct FriendCardView: View {
 
 struct FriendRequestCardView: View {
     let request: FriendRequest
+    let friendsManager: FriendsManager
     let onAccept: () -> Void
     let onDecline: () -> Void
     @State private var senderUser: User?
@@ -325,8 +329,9 @@ struct FriendRequestCardView: View {
         .cornerRadius(12)
         .onAppear {
             Task {
-                // Load sender user info (this would need to be implemented)
-                // senderUser = await friendsManager.getUser(by: request.senderId)
+                if senderUser == nil {
+                    senderUser = await friendsManager.getFriendRequestSender(request)
+                }
             }
         }
     }

@@ -18,7 +18,7 @@ func configureFirebase() {
     
     print("Firebase configuring with Project ID: \(projectId)")
     print("Bundle ID: \(bundleId)")
-    
+ 
     FirebaseApp.configure()
     
     if FirebaseApp.app() == nil {
