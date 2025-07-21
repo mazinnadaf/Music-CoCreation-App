@@ -1,8 +1,8 @@
 import SwiftUI
 import Combine
 import AVFoundation
-import FirebaseFirestore
-import FirebaseStorage
+@preconcurrency import FirebaseFirestore
+@preconcurrency import FirebaseStorage
 import FirebaseAuth
 
 // MARK: - Layer Data for Firestore Storage
@@ -12,7 +12,7 @@ struct LayerData: Identifiable, Codable {
     let prompt: String
     let duration: TimeInterval
     let creatorId: String?
-    let creatorName: String?
+    var creatorName: String?
     let bpm: Int
     let key: String?
     let instrument: Layer.InstrumentType
@@ -461,16 +461,20 @@ class AudioManager: NSObject, ObservableObject {
                     self.layers.append(newLayer)
                     self.isGenerating = false
                     
-                    // Auto-save the new layer to Firebase
+                    // Auto-save the new layer to both user's collection and public collection
                     if let localAudioURL = trackURL {
+                        // Save to user's collection
                         self.saveLayerToFirebase(newLayer, localAudioURL: localAudioURL) { result in
                             switch result {
                             case .success:
-                                print("[Firebase] ✅ Layer saved successfully: \(newLayer.name)")
+                                print("[Firebase] ✅ Layer saved to user collection: \(newLayer.name)")
                             case .failure(let error):
-                                print("[Firebase] ❌ Failed to save layer: \(error.localizedDescription)")
+                                print("[Firebase] ❌ Failed to save layer to user: \(error.localizedDescription)")
                             }
                         }
+                        
+                        // Also save to public collection immediately
+                        // (This will be done after the extension is properly closed)
                     }
                     
                     // Auto-play the new layer
@@ -591,6 +595,15 @@ class AudioManager: NSObject, ObservableObject {
         if let player = players[layerId] {
             player.pause()
             print("[AudioPlayer] Paused player for layer: \(layerId)")
+            
+            // Update the current time one more time when pausing to ensure it's accurate
+            if let index = layers.firstIndex(where: { $0.id == layerId }) {
+                let currentTime = player.currentTime().seconds
+                if currentTime.isFinite && currentTime >= 0 {
+                    layers[index].currentTime = currentTime
+                    print("[AudioPlayer] Updated paused time to: \(currentTime) seconds")
+                }
+            }
         }
     }
     
@@ -946,7 +959,15 @@ extension AudioManager {
             let bpm = self.layers.first?.bpm ?? 120
             let key = self.layers.first?.key
             
-// Determine track type based on settings
+            // Use existing layer IDs (they are already saved to public collection)
+            let layerIds = self.layers.map { $0.id }
+            
+            guard !layerIds.isEmpty else {
+                completion(.failure(NSError(domain: "No layers to publish", code: -1)))
+                return
+            }
+            
+            // Determine track type based on settings
             let trackType: Track.TrackType = isStem ? .stem : .track
             
             // Create track with layer IDs
@@ -962,7 +983,7 @@ extension AudioManager {
                 isOpen: allowCollaboration,
                 type: trackType,
                 description: description,
-                layerIds: self.layers.map { $0.id },
+                layerIds: layerIds, // Use existing layer IDs
                 bpm: bpm,
                 key: key
             )
@@ -1061,7 +1082,7 @@ extension AudioManager {
     }
     
     /// Load layers for a specific track
-    private func loadLayersForTrack(_ track: Track, completion: @escaping (Result<[Layer], Error>) -> Void) {
+    func loadLayersForTrack(_ track: Track, completion: @escaping (Result<[Layer], Error>) -> Void) {
         guard !track.layerIds.isEmpty else {
             completion(.success([]))
             return
@@ -1072,34 +1093,88 @@ extension AudioManager {
         var loadedLayers: [Layer] = []
         var loadError: Error?
         
-        // Load each layer from the track creator's clips
+        // Load each layer from publicLayers collection (for discover tracks)
         for layerId in track.layerIds {
             group.enter()
             
-            db.collection("users").document(track.artistId)
-                .collection("clips").document(layerId)
+            // First try to load from publicLayers collection
+            db.collection("publicLayers").document(layerId)
                 .getDocument { snapshot, error in
-                    defer { group.leave() }
-                    
                     if let error = error {
-                        print("[AudioPlayer] ❌ Failed to load layer \(layerId): \(error)")
-                        loadError = error
+                        print("[AudioPlayer] ❌ Failed to load public layer \(layerId): \(error)")
+                        // Fall back to user's clips collection
+                        db.collection("users").document(track.artistId)
+                            .collection("clips").document(layerId)
+                            .getDocument { userSnapshot, userError in
+                                defer { group.leave() }
+                                
+                                if let userError = userError {
+                                    print("[AudioPlayer] ❌ Failed to load user layer \(layerId): \(userError)")
+                                    loadError = userError
+                                    return
+                                }
+                                
+                                guard userSnapshot?.data() != nil else {
+                                    print("[AudioPlayer] ❌ No data for layer \(layerId)")
+                                    return
+                                }
+                                
+                                do {
+                                    let layerData = try userSnapshot!.data(as: LayerData.self)
+                                    let layer = layerData.toLayer()
+                                    loadedLayers.append(layer)
+                                    print("[AudioPlayer] ✅ Loaded layer from user collection: \(layer.name)")
+                                } catch {
+                                    print("[AudioPlayer] ❌ Failed to decode user layer: \(error)")
+                                    loadError = error
+                                }
+                            }
                         return
                     }
                     
                     guard snapshot?.data() != nil else {
-                        print("[AudioPlayer] ❌ No data for layer \(layerId)")
+                        print("[AudioPlayer] ⚠️ No public layer data for \(layerId), trying user collection")
+                        // Fall back to user's clips collection
+                        db.collection("users").document(track.artistId)
+                            .collection("clips").document(layerId)
+                            .getDocument { userSnapshot, userError in
+                                defer { group.leave() }
+                                
+                                if let userError = userError {
+                                    print("[AudioPlayer] ❌ Failed to load user layer \(layerId): \(userError)")
+                                    loadError = userError
+                                    return
+                                }
+                                
+                                guard userSnapshot?.data() != nil else {
+                                    print("[AudioPlayer] ❌ No data for layer \(layerId)")
+                                    return
+                                }
+                                
+                                do {
+                                    let layerData = try userSnapshot!.data(as: LayerData.self)
+                                    let layer = layerData.toLayer()
+                                    loadedLayers.append(layer)
+                                    print("[AudioPlayer] ✅ Loaded layer from user collection: \(layer.name)")
+                                } catch {
+                                    print("[AudioPlayer] ❌ Failed to decode user layer: \(error)")
+                                    loadError = error
+                                }
+                            }
                         return
                     }
                     
+                    // Public layer found, decode it
                     do {
                         let layerData = try snapshot!.data(as: LayerData.self)
                         let layer = layerData.toLayer()
                         loadedLayers.append(layer)
-                        print("[AudioPlayer] ✅ Loaded layer: \(layer.name)")
+                        print("[AudioPlayer] ✅ Loaded public layer: \(layer.name)")
+                        group.leave()
                     } catch {
-                        print("[AudioPlayer] ❌ Failed to decode layer: \(error)")
+                        print("[AudioPlayer] ❌ Failed to decode public layer: \(error)")
                         loadError = error
+                        group.leave()
                     }
                 }
         }
@@ -1165,10 +1240,12 @@ extension AudioManager {
     
     /// Get playback progress for a track
     func playbackProgress(for track: Track) -> Double {
-        // Check if any layer from this track is playing
+        // Check if any layer from this track exists (playing or paused)
         for layer in layers {
-            if track.layerIds.contains(layer.id) && layer.isPlaying {
-                return layer.currentTime / layer.duration
+            if track.layerIds.contains(layer.id) {
+                // Return progress regardless of playing state
+                let progress = layer.duration > 0 ? layer.currentTime / layer.duration : 0
+                return min(1.0, max(0.0, progress))
             }
         }
         return 0.0
@@ -1176,14 +1253,164 @@ extension AudioManager {
     
     /// Get current time string for a track
     func currentTime(for track: Track) -> String {
-        // Check if any layer from this track is playing
+        // Check if any layer from this track exists (playing or paused)
         for layer in layers {
-            if track.layerIds.contains(layer.id) && layer.isPlaying {
+            if track.layerIds.contains(layer.id) {
+                // Return time regardless of playing state
                 let minutes = Int(layer.currentTime) / 60
                 let seconds = Int(layer.currentTime) % 60
                 return String(format: "%d:%02d", minutes, seconds)
             }
         }
         return "0:00"
+    }
+    
+    /// Save a single layer to public collection immediately
+    func saveLayerToPublicCollection(_ layer: Layer, localAudioURL: URL, completion: @escaping (Result<String, Error>) -> Void) {
+        guard let user = Auth.auth().currentUser else {
+            completion(.failure(NSError(domain: "No user", code: -1)))
+            return
+        }
+        
+        print("[Firebase] 🔄 Saving layer to public collection: \(layer.name)")
+        
+        let storage = Storage.storage()
+        let db = Firestore.firestore()
+        
+        // Use the same layer ID for public storage
+        let publicStorageRef = storage.reference()
+            .child("public")
+            .child("layers")
+            .child("\(layer.id).wav")
+        
+        // Upload audio file to public storage
+        _ = publicStorageRef.putFile(from: localAudioURL, metadata: nil) { metadata, error in
+            if let error = error {
+                print("[Firebase] ❌ Failed to upload to public storage: \(error)")
+                completion(.failure(error))
+                return
+            }
+            
+            // Get download URL
+            publicStorageRef.downloadURL { url, error in
+                if let error = error {
+                    print("[Firebase] ❌ Failed to get public download URL: \(error)")
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let downloadURL = url else {
+                    completion(.failure(NSError(domain: "No download URL", code: -1)))
+                    return
+                }
+                
+                // Create public layer data
+                var publicLayerData = LayerData(from: layer)
+                publicLayerData.audioURLString = downloadURL.absoluteString
+                publicLayerData.isPublic = true
+                // publicLayerData.creatorId = user.uid  // creatorId is already set from the layer
+                publicLayerData.creatorName = layer.creatorName ?? user.displayName ?? "Unknown"
+                
+                // Save to public layers collection with same ID as original layer
+                db.collection("publicLayers").document(layer.id)
+                    .setData(try! Firestore.Encoder().encode(publicLayerData)) { error in
+                        if let error = error {
+                            print("[Firebase] ❌ Failed to save public layer data: \(error)")
+                            completion(.failure(error))
+                        } else {
+                            print("[Firebase] ✅ Layer saved to public collection: \(layer.id)")
+                            completion(.success(layer.id))
+                        }
+                    }
+            }
+        }
+    }
+    
+    /// Copy layers to public storage for discover usage
+    func copyLayersToPublicStorage(_ layers: [Layer], trackId: String, completion: @escaping ([String]) -> Void) {
+        let storage = Storage.storage()
+        let db = Firestore.firestore()
+        let group = DispatchGroup()
+        var publicLayerIds: [String] = []
+        
+        for layer in layers {
+            group.enter()
+            
+            // Download audio data from the layer's URL
+            guard let audioURLString = layer.audioURLString,
+                  let audioURL = URL(string: audioURLString) else {
+                print("[Firebase] ❌ Invalid audio URL for layer: \(layer.id)")
+                group.leave()
+                continue
+            }
+            
+            // Download the audio data
+            URLSession.shared.dataTask(with: audioURL) { data, response, error in
+                if let error = error {
+                    print("[Firebase] ❌ Failed to download audio for layer \(layer.id): \(error)")
+                    group.leave()
+                    return
+                }
+                
+                guard let audioData = data else {
+                    print("[Firebase] ❌ No audio data for layer \(layer.id)")
+                    group.leave()
+                    return
+                }
+                
+                // Create a new public layer ID
+                let publicLayerId = UUID().uuidString
+                let publicStorageRef = Storage.storage().reference()
+                    .child("public")
+                    .child("tracks")
+                    .child(trackId)
+                    .child("\(publicLayerId).wav")
+                
+                // Upload to public storage
+                publicStorageRef.putData(audioData, metadata: nil) { metadata, error in
+                    if let error = error {
+                        print("[Firebase] ❌ Failed to upload public audio: \(error)")
+                        group.leave()
+                        return
+                    }
+                    
+                    // Get download URL
+                    publicStorageRef.downloadURL { url, error in
+                        if let error = error {
+                            print("[Firebase] ❌ Failed to get public download URL: \(error)")
+                            group.leave()
+                            return
+                        }
+                        
+                        guard let downloadURL = url else {
+                            print("[Firebase] ❌ No download URL received")
+                            group.leave()
+                            return
+                        }
+                        
+                        // Create public layer data
+                        var publicLayerData = LayerData(from: layer)
+                        publicLayerData.audioURLString = downloadURL.absoluteString
+                        publicLayerData.isPublic = true
+                        
+                        // Save to public layers collection
+                        Firestore.firestore().collection("publicLayers").document(publicLayerId)
+                            .setData(try! Firestore.Encoder().encode(publicLayerData)) { error in
+                                if let error = error {
+                                    print("[Firebase] ❌ Failed to save public layer data: \(error)")
+                                } else {
+                                    publicLayerIds.append(publicLayerId)
+                                    print("[Firebase] ✅ Public layer created: \(publicLayerId)")
+                                }
+                                group.leave()
+                            }
+                    }
+                }
+            }.resume()
+        }
+        
+        group.notify(queue: .main) {
+            completion(publicLayerIds)
+        }
     }
 }

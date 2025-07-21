@@ -77,6 +77,12 @@ struct ActivePlayerView: View {
     let layer: Layer
     @EnvironmentObject var audioManager: AudioManager
     
+    func formatTime(_ time: TimeInterval) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        return String(format: "%d:%02d", minutes, seconds)
+    }
+    
     var body: some View {
         VStack(spacing: 16) {
             HStack {
@@ -98,9 +104,10 @@ struct ActivePlayerView: View {
                         .font(.headline)
                         .foregroundColor(.primaryText)
                     
-                    Text("\(Int(layer.currentTime))s / \(Int(layer.duration))s")
+                    Text(formatTime(layer.currentTime) + " / " + formatTime(layer.duration))
                         .font(.caption)
                         .foregroundColor(.secondaryText)
+                        .monospacedDigit() // Keeps numbers from shifting
                 }
                 
                 Spacer()
@@ -134,10 +141,13 @@ struct ActivePlayerView: View {
                         .fill(Color.borderColor)
                         .frame(height: 4)
                     
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(LinearGradient.primaryGradient)
-                        .frame(width: geometry.size.width * (layer.currentTime / layer.duration), height: 4)
-                        .animation(.linear(duration: 0.1), value: layer.currentTime)
+                    if layer.duration > 0 {
+                        let progress = min(1.0, max(0.0, layer.currentTime / layer.duration))
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(LinearGradient.primaryGradient)
+                            .frame(width: geometry.size.width * progress, height: 4)
+                            .animation(.linear(duration: 0.1), value: layer.currentTime)
+                    }
                 }
             }
             .frame(height: 4)
@@ -154,7 +164,7 @@ struct WaveformView: View {
     var body: some View {
         HStack(spacing: 1) {
             ForEach(Array(waveformData.enumerated()), id: \.offset) { index, amplitude in
-                let progress = currentTime / duration
+                let progress = duration > 0 ? min(1.0, max(0.0, currentTime / duration)) : 0
                 let barProgress = Double(index) / Double(waveformData.count)
                 let isActive = progress > barProgress
                 

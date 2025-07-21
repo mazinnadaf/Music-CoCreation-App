@@ -86,8 +86,8 @@ struct TrackCardView: View {
                         }
                     }
                     
-                    // Progress bar when playing
-                    if isPlaying {
+                    // Progress bar - show when track has been played (has progress)
+                    if playbackProgress > 0 || currentTime != "0:00" {
                         VStack(spacing: 4) {
                             GeometryReader { geometry in
                                 ZStack(alignment: .leading) {

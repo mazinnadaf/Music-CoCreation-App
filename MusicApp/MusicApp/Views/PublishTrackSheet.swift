@@ -34,7 +34,7 @@ VStack(alignment: .leading, spacing: 12) {
                                 }
                             }
                             .tint(Color.primaryBlue)
-                            .onChange(of: useAsStem) { newValue in
+                            .onChange(of: useAsStem) { _, newValue in
                                 if newValue { allowCollaboration = false }
                             }
                             
@@ -48,7 +48,7 @@ VStack(alignment: .leading, spacing: 12) {
                                 }
                             }
                             .tint(Color.primaryBlue)
-                            .onChange(of: allowCollaboration) { newValue in
+                            .onChange(of: allowCollaboration) { _, newValue in
                                 if newValue { useAsStem = false }
                             }
                         }

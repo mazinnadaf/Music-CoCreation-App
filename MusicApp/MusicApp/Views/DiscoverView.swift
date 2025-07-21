@@ -155,11 +155,41 @@ struct DiscoverView: View {
     }
     
     private func playTrack(_ track: Track) {
-        // If same track is playing, stop it
+        // If same track is playing, toggle pause/resume
         if currentlyPlayingTrackId == track.id {
+            // Check if any layers from this track are loaded
+            let hasLoadedLayers = audioManager.layers.contains { layer in
+                track.layerIds.contains(layer.id)
+            }
+            
+            if hasLoadedLayers {
+                // Track is loaded, just toggle playback
+                let isAnyLayerPlaying = audioManager.layers.contains { layer in
+                    track.layerIds.contains(layer.id) && layer.isPlaying
+                }
+                
+                if isAnyLayerPlaying {
+                    // Pause all layers from this track
+                    for layer in audioManager.layers where track.layerIds.contains(layer.id) {
+                        if layer.isPlaying {
+                            audioManager.toggleLayerPlayback(layerId: layer.id)
+                        }
+                    }
+                } else {
+                    // Resume all layers from this track
+                    for layer in audioManager.layers where track.layerIds.contains(layer.id) {
+                        if !layer.isPlaying {
+                            audioManager.toggleLayerPlayback(layerId: layer.id)
+                        }
+                    }
+                }
+                return
+            }
+        }
+        
+        // Different track or no track loaded - stop current and play new
+        if currentlyPlayingTrackId != nil {
             audioManager.stopAllLayers()
-            currentlyPlayingTrackId = nil
-            return
         }
         
         // Set as currently playing
@@ -178,10 +208,15 @@ struct DiscoverView: View {
     }
     
     private func trackCard(for track: Track) -> some View {
-        TrackCardView(
+        let isActuallyPlaying = currentlyPlayingTrackId == track.id && 
+            audioManager.layers.contains { layer in
+                track.layerIds.contains(layer.id) && layer.isPlaying
+            }
+        
+        return TrackCardView(
             track: track,
             isLiked: likedTracks.contains(track.id),
-            isPlaying: currentlyPlayingTrackId == track.id,
+            isPlaying: isActuallyPlaying,
             playbackProgress: audioManager.playbackProgress(for: track),
             currentTime: audioManager.currentTime(for: track),
             onLike: { toggleLike(trackId: track.id) },
@@ -189,7 +224,7 @@ struct DiscoverView: View {
             onJoin: { _ in joinTrackAsCollaborator(track) }
         )
         .overlay(
-            // Playing indicator
+            // Playing indicator - show when track is loaded (playing or paused)
             currentlyPlayingTrackId == track.id ?
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.primaryBlue, lineWidth: 2)

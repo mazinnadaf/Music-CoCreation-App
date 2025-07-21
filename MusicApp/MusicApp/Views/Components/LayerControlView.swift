@@ -45,7 +45,7 @@ struct LayerControlView: View {
                         .lineLimit(1)
                     
                     // Waveform
-                    LayerWaveformView(data: layer.waveformData, progress: layer.isPlaying ? layer.currentTime / layer.duration : 0)
+                    LayerWaveformView(data: layer.waveformData, progress: layer.currentTime / layer.duration)
                         .frame(height: 30)
                 }
                 
@@ -104,7 +104,7 @@ struct LayerControlView: View {
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(layer.isPlaying ? Color.primaryPurple.opacity(0.5) : Color.borderColor, lineWidth: 1)
+                    .stroke(layer.currentTime > 0 ? Color.primaryPurple.opacity(0.5) : Color.borderColor, lineWidth: 1)
             )
             
             // Options Menu
@@ -138,8 +138,10 @@ struct LayerWaveformView: View {
         GeometryReader { geometry in
             HStack(spacing: 2) {
                 ForEach(0..<data.count, id: \.self) { index in
-                    let isActive = index < Int(Double(data.count) * progress)
-                    let barWidth = geometry.size.width / CGFloat(data.count) - 2
+                    // Ensure progress is valid
+                    let safeProgress = progress.isNaN || progress.isInfinite ? 0 : max(0, min(1, progress))
+                    let isActive = index < Int(Double(data.count) * safeProgress)
+                    let barWidth = max(1, geometry.size.width / CGFloat(data.count) - 2)
                     let barHeight = geometry.size.height * CGFloat(data[index])
                     
                     Rectangle()
