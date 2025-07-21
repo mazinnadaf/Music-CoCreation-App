@@ -10,7 +10,7 @@ class MessagingManager: ObservableObject {
     
     private let firebaseManager = FirebaseManager.shared
     private var cancellables = Set<AnyCancellable>()
-    private var currentUserId: UUID?
+    private var currentUserId: String?
     private var currentConversationId: String?
     
     init() {
@@ -23,7 +23,7 @@ class MessagingManager: ObservableObject {
             .store(in: &cancellables)
     }
     
-    func initialize(with userId: UUID) {
+    func initialize(with userId: String) {
         self.currentUserId = userId
         loadConversations()
     }
@@ -33,7 +33,7 @@ class MessagingManager: ObservableObject {
         firebaseManager.loadConversations(for: userId)
     }
     
-    func startConversation(with friendId: UUID) async -> String? {
+    func startConversation(with friendId: String) async -> String? {
         guard let currentUserId = currentUserId else { return nil }
         
         do {
@@ -61,12 +61,12 @@ class MessagingManager: ObservableObject {
             .store(in: &cancellables)
     }
     
-    func sendMessage(content: String, to receiverId: UUID, in conversationId: String) async {
+    func sendMessage(content: String, to receiverId: String, in conversationId: String) async {
         guard let currentUserId = currentUserId else { return }
         
         let message = Message(
-            senderId: currentUserId.uuidString,
-            receiverId: receiverId.uuidString,
+            senderId: currentUserId,
+            receiverId: receiverId,
             content: content
         )
         
@@ -92,7 +92,7 @@ class MessagingManager: ObservableObject {
     }
     
     func getOtherParticipant(in conversation: Conversation) -> String? {
-        return conversation.participants.first { $0 != currentUserId?.uuidString }
+        return conversation.participants.first { $0 != currentUserId }
     }
     
     func clearCurrentMessages() {

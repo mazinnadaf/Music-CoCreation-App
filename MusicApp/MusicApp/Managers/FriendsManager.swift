@@ -11,7 +11,7 @@ class FriendsManager: ObservableObject {
     
     private let firebaseManager = FirebaseManager.shared
     private var cancellables = Set<AnyCancellable>()
-    private var currentUserId: UUID?
+    private var currentUserId: String?
     
     init() {
         setupBindings()
@@ -27,7 +27,7 @@ class FriendsManager: ObservableObject {
             .store(in: &cancellables)
     }
     
-    func initialize(with userId: UUID) {
+    func initialize(with userId: String) {
         self.currentUserId = userId
         loadFriends()
         loadFriendRequests()
@@ -61,7 +61,7 @@ class FriendsManager: ObservableObject {
             await MainActor.run {
                 // Filter out current user and existing friends
                 self.searchResults = users.filter { user in
-                    user.id != self.currentUserId?.uuidString && 
+                    user.id != self.currentUserId && 
                     !self.friends.contains { $0.id == user.id }
                 }
                 self.isLoading = false
@@ -82,12 +82,11 @@ class FriendsManager: ObservableObject {
         }
         
         // Check if friend request already exists
-        let targetUserId = UUID(uuidString: user.id) ?? UUID()
+        let targetUserId = user.id
         print("👤 Sending friend request:")
-        print("   Current user ID: \(currentUserId.uuidString)")
-        print("   Target user ID: \(user.id)")
+        print("   Current user ID: \(currentUserId)")
+        print("   Target user ID: \(targetUserId)")
         print("   Target username: \(user.username)")
-        print("   Target UUID: \(targetUserId.uuidString)")
         
         let existingRequest = friendRequests.first { request in
             (request.senderId == currentUserId && request.receiverId == targetUserId) ||
@@ -105,7 +104,7 @@ class FriendsManager: ObservableObject {
             try await firebaseManager.sendFriendRequest(to: targetUserId, from: currentUserId)
             await MainActor.run {
                 self.error = nil
-                print("✅ Friend request sent from \(currentUserId.uuidString) to \(user.id)")
+                print("✅ Friend request sent from \(currentUserId) to \(targetUserId)")
             }
         } catch {
             await MainActor.run {
@@ -148,7 +147,7 @@ class FriendsManager: ObservableObject {
     
     func getFriendRequestSender(_ request: FriendRequest) async -> User? {
         do {
-            return try await firebaseManager.getUser(by: request.senderId.uuidString)
+            return try await firebaseManager.getUser(by: request.senderId)
         } catch {
             await MainActor.run {
                 self.error = "Failed to get friend request sender: \(error.localizedDescription)"

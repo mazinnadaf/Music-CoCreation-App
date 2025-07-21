@@ -303,12 +303,12 @@ struct Conversation: Identifiable, Codable {
 // MARK: - Friend Request Models
 struct FriendRequest: Identifiable, Codable {
     let id: UUID
-    let senderId: UUID
-    let receiverId: UUID
+    let senderId: String
+    let receiverId: String
     var status: FriendRequestStatus
     let sentAt: Date
     
-    init(id: UUID = UUID(), senderId: UUID, receiverId: UUID, status: FriendRequestStatus, sentAt: Date = Date()) {
+    init(id: UUID = UUID(), senderId: String, receiverId: String, status: FriendRequestStatus, sentAt: Date = Date()) {
         self.id = id
         self.senderId = senderId
         self.receiverId = receiverId

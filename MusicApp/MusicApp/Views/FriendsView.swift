@@ -68,7 +68,7 @@ struct FriendsView: View {
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
                 if let currentUser = authManager.currentUser {
-                    friendsManager.initialize(with: UUID(uuidString: currentUser.id) ?? UUID())
+                    friendsManager.initialize(with: currentUser.id)
                 }
             }
             .alert("Error", isPresented: .constant(friendsManager.error != nil)) {

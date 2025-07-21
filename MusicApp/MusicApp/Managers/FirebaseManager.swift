@@ -108,7 +108,7 @@ class FirebaseManager: ObservableObject {
     }
     
     // MARK: - Friends Management
-    func sendFriendRequest(to userId: UUID, from currentUserId: UUID) async throws {
+    func sendFriendRequest(to userId: String, from currentUserId: String) async throws {
         let friendRequest = FriendRequest(
             senderId: currentUserId,
             receiverId: userId,
@@ -117,15 +117,15 @@ class FirebaseManager: ObservableObject {
         
         let requestData: [String: Any] = [
             "id": friendRequest.id.uuidString,
-            "senderId": friendRequest.senderId.uuidString,
-            "receiverId": friendRequest.receiverId.uuidString,
+            "senderId": friendRequest.senderId,
+            "receiverId": friendRequest.receiverId,
             "status": friendRequest.status.rawValue,
             "sentAt": Timestamp(date: friendRequest.sentAt)
         ]
         
         print("🔥 Sending friend request:")
-        print("   From: \(currentUserId.uuidString)")
-        print("   To: \(userId.uuidString)")
+        print("   From: \(currentUserId)")
+        print("   To: \(userId)")
         print("   Request ID: \(friendRequest.id.uuidString)")
         
         try await db.collection("friendRequests").document(friendRequest.id.uuidString).setData(requestData)
@@ -137,10 +137,8 @@ class FirebaseManager: ObservableObject {
         let requestDoc = try await requestRef.getDocument()
         
         guard let requestData = requestDoc.data(),
-              let senderIdString = requestData["senderId"] as? String,
-              let receiverIdString = requestData["receiverId"] as? String,
-              let senderId = UUID(uuidString: senderIdString),
-              let receiverId = UUID(uuidString: receiverIdString) else {
+              let senderId = requestData["senderId"] as? String,
+              let receiverId = requestData["receiverId"] as? String else {
             throw NSError(domain: "FirebaseManager", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid friend request data"])
         }
         
@@ -157,14 +155,14 @@ class FirebaseManager: ObservableObject {
         }
     }
     
-    private func addFriend(userId: UUID, friendId: UUID) async throws {
-        try await db.collection("users").document(userId.uuidString).updateData([
-            "friends": FieldValue.arrayUnion([friendId.uuidString])
+    private func addFriend(userId: String, friendId: String) async throws {
+        try await db.collection("users").document(userId).updateData([
+            "friends": FieldValue.arrayUnion([friendId])
         ])
     }
     
-    func loadFriends(for userId: UUID) {
-        db.collection("users").document(userId.uuidString)
+    func loadFriends(for userId: String) {
+        db.collection("users").document(userId)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let data = snapshot?.data(),
                       let friendIds = data["friends"] as? [String] else { return }
@@ -197,11 +195,11 @@ class FirebaseManager: ObservableObject {
             }
     }
     
-    func loadFriendRequests(for userId: UUID) {
-        print("🔍 Loading friend requests for user: \(userId.uuidString)")
+    func loadFriendRequests(for userId: String) {
+        print("🔍 Loading friend requests for user: \(userId)")
         
         db.collection("friendRequests")
-            .whereField("receiverId", isEqualTo: userId.uuidString)
+            .whereField("receiverId", isEqualTo: userId)
             .whereField("status", isEqualTo: FriendRequestStatus.pending.rawValue)
             .addSnapshotListener { [weak self] snapshot, error in
                 if let error = error {
@@ -225,10 +223,8 @@ class FirebaseManager: ObservableObject {
                                     print("📋 Processing friend request document: \(doc.documentID)")
                                     print("   Data: \(data)")
                                     
-                                    guard let senderIdString = data["senderId"] as? String,
-                                          let receiverIdString = data["receiverId"] as? String,
-                                          let senderId = UUID(uuidString: senderIdString),
-                                          let receiverId = UUID(uuidString: receiverIdString),
+                                    guard let senderId = data["senderId"] as? String,
+                                          let receiverId = data["receiverId"] as? String,
                                           let statusString = data["status"] as? String,
                                           let status = FriendRequestStatus(rawValue: statusString) else {
                                         print("❌ Invalid friend request data in document: \(doc.documentID)")
@@ -270,8 +266,8 @@ class FirebaseManager: ObservableObject {
     }
     
     // MARK: - Messaging
-    func createOrGetConversation(between user1: UUID, and user2: UUID) async throws -> String {
-        let conversationId = [user1.uuidString, user2.uuidString].sorted().joined(separator: "_")
+    func createOrGetConversation(between user1: String, and user2: String) async throws -> String {
+        let conversationId = [user1, user2].sorted().joined(separator: "_")
         let conversationRef = db.collection("conversations").document(conversationId)
         
         let doc = try await conversationRef.getDocument()
@@ -279,12 +275,12 @@ class FirebaseManager: ObservableObject {
         if !doc.exists {
             let conversationData: [String: Any] = [
                 "id": conversationId,
-                "participants": [user1.uuidString, user2.uuidString],
+                "participants": [user1, user2],
                 "createdAt": Timestamp(date: Date()),
                 "lastMessage": NSNull(),
                 "unreadCounts": [
-                    user1.uuidString: 0,
-                    user2.uuidString: 0
+                    user1: 0,
+                    user2: 0
                 ]
             ]
             
@@ -358,9 +354,9 @@ class FirebaseManager: ObservableObject {
         return subject.eraseToAnyPublisher()
     }
     
-    func loadConversations(for userId: UUID) {
+    func loadConversations(for userId: String) {
         db.collection("conversations")
-            .whereField("participants", arrayContains: userId.uuidString)
+            .whereField("participants", arrayContains: userId)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let documents = snapshot?.documents else { return }
                 
@@ -398,7 +394,7 @@ class FirebaseManager: ObservableObject {
                                 }
                                 
                                 if let unreadCounts = data["unreadCounts"] as? [String: Int] {
-                                    conversation.unreadCount = unreadCounts[userId.uuidString] ?? 0
+                                    conversation.unreadCount = unreadCounts[userId] ?? 0
                                 }
                                 
                                 return conversation
@@ -419,9 +415,9 @@ class FirebaseManager: ObservableObject {
             }
     }
     
-    func markMessagesAsRead(in conversationId: String, for userId: UUID) async throws {
+    func markMessagesAsRead(in conversationId: String, for userId: String) async throws {
         try await db.collection("conversations").document(conversationId).updateData([
-            "unreadCounts.\(userId.uuidString)": 0
+            "unreadCounts.\(userId)": 0
         ])
     }
 }

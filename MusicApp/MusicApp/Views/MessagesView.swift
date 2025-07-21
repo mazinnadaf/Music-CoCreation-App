@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MessagesView: View {
     @StateObject private var messagingManager = MessagingManager()
+    @StateObject private var friendsManager = FriendsManager()
     @State private var selectedConversation: Conversation?
     @State private var showNewMessage = false
     @EnvironmentObject var authManager: AuthenticationManager
@@ -19,7 +20,8 @@ struct MessagesView: View {
                             ForEach(messagingManager.conversations) { conversation in
                                 ConversationRow(
                                     conversation: conversation,
-                                    currentUserId: authManager.currentUser?.id ?? ""
+                                    currentUserId: authManager.currentUser?.id ?? "",
+                                    friendsManager: friendsManager
                                 ) {
                                     selectedConversation = conversation
                                 }
@@ -42,15 +44,34 @@ struct MessagesView: View {
                 }
             }
             .sheet(isPresented: $showNewMessage) {
-                NewMessageView()
+                NewMessageView(
+                    friendsManager: friendsManager,
+                    messagingManager: messagingManager
+                ) { friend in
+                    // Handle friend selection - start conversation
+                Task {
+                    if let conversationId = await messagingManager.startConversation(with: friend.id) {
+                        showNewMessage = false
+                        // Find the conversation object from the conversations list
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            if let conversation = messagingManager.conversations.first(where: { 
+                                $0.participants.contains(friend.id) && $0.participants.contains(authManager.currentUser?.id ?? "")
+                            }) {
+                                selectedConversation = conversation
+                            }
+                        }
+                    }
+                }
+                }
             }
             .sheet(item: $selectedConversation) { conversation in
-                ChatView(conversation: conversation)
+                ChatView(conversation: conversation, friendsManager: friendsManager)
                     .environmentObject(authManager)
             }
             .onAppear {
                 if let currentUser = authManager.currentUser {
-                    messagingManager.initialize(with: UUID(uuidString: currentUser.id) ?? UUID())
+                    messagingManager.initialize(with: currentUser.id)
+                    friendsManager.initialize(with: currentUser.id)
                 }
             }
         }
@@ -83,7 +104,25 @@ struct EmptyMessagesView: View {
 struct ConversationRow: View {
     let conversation: Conversation
     let currentUserId: String
+    let friendsManager: FriendsManager
     let onTap: () -> Void
+    
+    @State private var friendInfo: User?
+    @State private var isLoadingFriend = true
+    
+    var friendId: String? {
+        conversation.participants.first { $0 != currentUserId }
+    }
+    
+    var friendName: String {
+        friendInfo?.artistName ?? friendInfo?.username ?? "Unknown"
+    }
+    
+    var friendInitials: String {
+        let name = friendName
+        let initials = name.split(separator: " ").compactMap { $0.first }.prefix(2)
+        return initials.map(String.init).joined().uppercased()
+    }
     
     var body: some View {
         Button(action: onTap) {
@@ -93,16 +132,22 @@ struct ConversationRow: View {
                     .fill(LinearGradient.primaryGradient)
                     .frame(width: 56, height: 56)
                     .overlay(
-                        Text("JD") // Placeholder initials
+                        Text(friendInitials.isEmpty ? "?" : friendInitials)
                             .font(.headline)
                             .foregroundColor(.white)
                     )
                 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text("John Doe") // Placeholder name
-                            .font(.headline)
-                            .foregroundColor(.primaryText)
+                        if isLoadingFriend {
+                            Text("Loading...")
+                                .font(.headline)
+                                .foregroundColor(.secondaryText)
+                        } else {
+                            Text(friendName)
+                                .font(.headline)
+                                .foregroundColor(.primaryText)
+                        }
                         
                         Spacer()
                         
@@ -137,6 +182,42 @@ struct ConversationRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            loadFriendInfo()
+        }
+    }
+    
+    func loadFriendInfo() {
+        guard let friendId = friendId else {
+            isLoadingFriend = false
+            return
+        }
+        
+        // Check if friend is already in the friends list
+        if let friend = friendsManager.friends.first(where: { $0.id == friendId }) {
+            self.friendInfo = friend
+            self.isLoadingFriend = false
+        } else {
+            // If not in friends list, fetch from Firebase
+            Task {
+                do {
+                    if let user = try await FirebaseManager.shared.getUser(by: friendId) {
+                        await MainActor.run {
+                            self.friendInfo = user
+                            self.isLoadingFriend = false
+                        }
+                    } else {
+                        await MainActor.run {
+                            self.isLoadingFriend = false
+                        }
+                    }
+                } catch {
+                    await MainActor.run {
+                        self.isLoadingFriend = false
+                    }
+                }
+            }
+        }
     }
     
     func formatTimestamp(_ date: Date) -> String {
@@ -149,12 +230,22 @@ struct ConversationRow: View {
 // MARK: - Chat View
 struct ChatView: View {
     let conversation: Conversation
+    let friendsManager: FriendsManager
     @State private var messageText = ""
     @StateObject private var messagingManager = MessagingManager()
     @EnvironmentObject var authManager: AuthenticationManager
     @Environment(\.dismiss) var dismiss
     @FocusState private var isMessageFieldFocused: Bool
     @State private var conversationId: String = ""
+    @State private var friendInfo: User?
+    
+    var friendId: String? {
+        conversation.participants.first { $0 != authManager.currentUser?.id }
+    }
+    
+    var chatTitle: String {
+        friendInfo?.artistName ?? friendInfo?.username ?? "Chat"
+    }
     
     var body: some View {
         NavigationView {
@@ -162,7 +253,7 @@ struct ChatView: View {
                 messagesList
                 messageInputView
             }
-            .navigationTitle("Chat")
+            .navigationTitle(chatTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -176,6 +267,7 @@ struct ChatView: View {
         }
         .onAppear {
             loadMessages()
+            loadFriendInfo()
         }
     }
     
@@ -253,7 +345,7 @@ struct ChatView: View {
         Task {
             await messagingManager.sendMessage(
                 content: messageContent,
-                to: UUID(uuidString: receiverId) ?? UUID(),
+                to: receiverId,
                 in: conversationId
             )
         }
@@ -261,13 +353,35 @@ struct ChatView: View {
     
     private func loadMessages() {
         if let currentUserId = authManager.currentUser?.id {
-            messagingManager.initialize(with: UUID(uuidString: currentUserId) ?? UUID())
+            messagingManager.initialize(with: currentUserId)
             
             // Generate conversation ID from participants
             let sortedParticipants = conversation.participants.sorted()
             conversationId = sortedParticipants.joined(separator: "_")
             
             messagingManager.loadMessages(for: conversationId)
+        }
+    }
+    
+    private func loadFriendInfo() {
+        guard let friendId = friendId else { return }
+        
+        // Check if friend is already in the friends list
+        if let friend = friendsManager.friends.first(where: { $0.id == friendId }) {
+            self.friendInfo = friend
+        } else {
+            // If not in friends list, fetch from Firebase
+            Task {
+                do {
+                    if let user = try await FirebaseManager.shared.getUser(by: friendId) {
+                        await MainActor.run {
+                            self.friendInfo = user
+                        }
+                    }
+                } catch {
+                    print("Error loading friend info: \(error)")
+                }
+            }
         }
     }
 }
@@ -316,40 +430,30 @@ struct MessageBubble: View {
 
 // MARK: - New Message View
 struct NewMessageView: View {
+    @ObservedObject var friendsManager: FriendsManager
+    @ObservedObject var messagingManager: MessagingManager
+    let onFriendSelected: (User) -> Void
+    
     @State private var searchText = ""
-    @State private var friends: [User] = [] // Would be populated from data
     @Environment(\.dismiss) var dismiss
     @FocusState private var isSearchFieldFocused: Bool
+    
+    var filteredFriends: [User] {
+        if searchText.isEmpty {
+            return friendsManager.friends
+        } else {
+            return friendsManager.friends.filter { friend in
+                friend.artistName.localizedCaseInsensitiveContains(searchText) ||
+                friend.username.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
     
     var body: some View {
         NavigationView {
             VStack {
-                // Search Bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.secondaryText)
-                    TextField("Search friends...", text: $searchText)
-                        .foregroundColor(.primaryText)
-                        .focused($isSearchFieldFocused)
-                }
-                .padding()
-                .background(Color.cardBackground)
-                .cornerRadius(8)
-                .padding()
-                
-                // Friends List
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        // Demo friends
-                        ForEach(0..<10) { index in
-                            FriendRow(name: "Artist \(index + 1)", subtitle: "Producer") {
-                                // Start conversation
-                                dismiss()
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                }
+                searchBar
+                friendsList
             }
             .background(Color.darkBackground.ignoresSafeArea())
             .navigationTitle("New Message")
@@ -363,6 +467,59 @@ struct NewMessageView: View {
                 }
             }
         }
+    }
+    
+    private var searchBar: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.secondaryText)
+            TextField("Search friends...", text: $searchText)
+                .foregroundColor(.primaryText)
+                .focused($isSearchFieldFocused)
+        }
+        .padding()
+        .background(Color.cardBackground)
+        .cornerRadius(8)
+        .padding()
+    }
+    
+    private var friendsList: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                if filteredFriends.isEmpty {
+                    emptyState
+                } else {
+                    ForEach(filteredFriends) { friend in
+                        FriendRow(
+                            name: friend.artistName,
+                            subtitle: "@\(friend.username)"
+                        ) {
+                            onFriendSelected(friend)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "person.2.slash")
+                .font(.system(size: 48))
+                .foregroundColor(.secondaryText)
+            
+            Text(searchText.isEmpty ? "No friends yet" : "No friends found")
+                .font(.headline)
+                .foregroundColor(.secondaryText)
+            
+            if searchText.isEmpty {
+                Text("Add friends to start messaging")
+                    .font(.caption)
+                    .foregroundColor(.secondaryText)
+            }
+        }
+        .padding(.top, 40)
     }
 }
 
