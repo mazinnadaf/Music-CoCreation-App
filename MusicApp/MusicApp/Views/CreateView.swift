@@ -11,7 +11,11 @@ struct CreateView: View {
                 VStack(spacing: 24) {
                     // Header
                     VStack(spacing: 16) {
-                        Text("Create Your Next Hit")
+                        Image("sona-logo")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 80, height: 80)
+                        Text("Create Your Next Hit on Sona")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .foregroundStyle(LinearGradient.primaryGradient)

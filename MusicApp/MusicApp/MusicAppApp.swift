@@ -28,7 +28,7 @@ func configureFirebase() {
 }
 
 @main
-struct SyncFlowApp: App {
+struct SonaApp: App {
     init() {
         configureFirebase()
     }
