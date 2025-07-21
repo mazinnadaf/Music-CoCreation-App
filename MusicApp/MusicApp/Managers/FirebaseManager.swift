@@ -20,34 +20,38 @@ class FirebaseManager: ObservableObject {
     // MARK: - User Management
     func saveUser(_ user: User) async throws {
         let userData: [String: Any] = [
-            "id": user.id.uuidString,
+            "id": user.id,
             "username": user.username,
             "artistName": user.artistName,
             "bio": user.bio,
             "avatar": user.avatar ?? "",
             "joinedDate": Timestamp(date: user.joinedDate),
             "isVerified": user.isVerified,
-            "friends": user.friends.map { $0.uuidString },
-            "starredTracks": user.starredTracks.map { $0.uuidString }
+            "friends": user.friends,
+            "starredTracks": user.starredTracks
         ]
         
-        try await db.collection("users").document(user.id.uuidString).setData(userData, merge: true)
+        try await db.collection("users").document(user.id).setData(userData, merge: true)
     }
     
-    func getUser(by id: UUID) async throws -> User? {
-        let doc = try await db.collection("users").document(id.uuidString).getDocument()
+    func getUser(by id: String) async throws -> User? {
+        let doc = try await db.collection("users").document(id).getDocument()
         guard doc.exists, let data = doc.data() else { return nil }
         
         return User(
-            id: UUID(uuidString: data["id"] as? String ?? "") ?? id,
+            id: data["id"] as? String ?? id,
             username: data["username"] as? String ?? "",
             artistName: data["artistName"] as? String ?? "",
             bio: data["bio"] as? String ?? "",
             avatar: data["avatar"] as? String,
+            skills: [],
+            socialLinks: [],
+            stats: UserStats(),
+            badges: [],
             joinedDate: (data["joinedDate"] as? Timestamp)?.dateValue() ?? Date(),
             isVerified: data["isVerified"] as? Bool ?? false,
-            friends: (data["friends"] as? [String])?.compactMap { UUID(uuidString: $0) } ?? [],
-            starredTracks: (data["starredTracks"] as? [String])?.compactMap { UUID(uuidString: $0) } ?? []
+            friends: data["friends"] as? [String] ?? [],
+            starredTracks: data["starredTracks"] as? [String] ?? []
         )
     }
     
@@ -63,15 +67,19 @@ class FirebaseManager: ObservableObject {
                 group.addTask {
                     let data = doc.data()
                     return User(
-                        id: UUID(uuidString: data["id"] as? String ?? "") ?? UUID(),
+                        id: data["id"] as? String ?? UUID().uuidString,
                         username: data["username"] as? String ?? "",
                         artistName: data["artistName"] as? String ?? "",
                         bio: data["bio"] as? String ?? "",
                         avatar: data["avatar"] as? String,
+                        skills: [],
+                        socialLinks: [],
+                        stats: UserStats(),
+                        badges: [],
                         joinedDate: (data["joinedDate"] as? Timestamp)?.dateValue() ?? Date(),
                         isVerified: data["isVerified"] as? Bool ?? false,
-                        friends: (data["friends"] as? [String])?.compactMap { UUID(uuidString: $0) } ?? [],
-                        starredTracks: (data["starredTracks"] as? [String])?.compactMap { UUID(uuidString: $0) } ?? []
+                        friends: data["friends"] as? [String] ?? [],
+                        starredTracks: data["starredTracks"] as? [String] ?? []
                     )
                 }
             }
@@ -147,7 +155,7 @@ class FirebaseManager: ObservableObject {
                         let friends = try await withThrowingTaskGroup(of: User?.self) { group in
                             for friendId in friendIds {
                                 group.addTask {
-                                    try await self?.getUser(by: UUID(uuidString: friendId) ?? UUID())
+                                    try await self?.getUser(by: friendId)
                                 }
                             }
                             
@@ -249,8 +257,8 @@ class FirebaseManager: ObservableObject {
     func sendMessage(_ message: Message, to conversationId: String) async throws {
         let messageData: [String: Any] = [
             "id": message.id.uuidString,
-            "senderId": message.senderId.uuidString,
-            "receiverId": message.receiverId.uuidString,
+            "senderId": message.senderId,
+            "receiverId": message.receiverId,
             "content": message.content,
             "timestamp": Timestamp(date: message.timestamp),
             "isRead": message.isRead,
@@ -265,7 +273,7 @@ class FirebaseManager: ObservableObject {
         // Update conversation's last message and unread count
         try await conversationRef.updateData([
             "lastMessage": messageData,
-            "unreadCounts.\(message.receiverId.uuidString)": FieldValue.increment(Int64(1))
+            "unreadCounts.\(message.receiverId)": FieldValue.increment(Int64(1))
         ])
     }
     
@@ -284,10 +292,8 @@ class FirebaseManager: ObservableObject {
                 
                 let messages = documents.compactMap { doc -> Message? in
                     let data = doc.data()
-                    guard let senderIdString = data["senderId"] as? String,
-                          let receiverIdString = data["receiverId"] as? String,
-                          let senderId = UUID(uuidString: senderIdString),
-                          let receiverId = UUID(uuidString: receiverIdString),
+                    guard let senderId = data["senderId"] as? String,
+                          let receiverId = data["receiverId"] as? String,
                           let content = data["content"] as? String,
                           let timestamp = (data["timestamp"] as? Timestamp)?.dateValue(),
                           let messageTypeString = data["messageType"] as? String,
@@ -330,14 +336,11 @@ class FirebaseManager: ObservableObject {
                             }
                             
                             group.addTask {
-                                let participantUUIDs = participants.compactMap { UUID(uuidString: $0) }
-                                var conversation = Conversation(participants: participantUUIDs)
+                                var conversation = Conversation(participants: participants)
                                 
                                 if let lastMessageData = data["lastMessage"] as? [String: Any],
-                                   let senderIdString = lastMessageData["senderId"] as? String,
-                                   let receiverIdString = lastMessageData["receiverId"] as? String,
-                                   let senderId = UUID(uuidString: senderIdString),
-                                   let receiverId = UUID(uuidString: receiverIdString),
+                                   let senderId = lastMessageData["senderId"] as? String,
+                                   let receiverId = lastMessageData["receiverId"] as? String,
                                    let content = lastMessageData["content"] as? String,
                                    let timestamp = (lastMessageData["timestamp"] as? Timestamp)?.dateValue(),
                                    let messageTypeString = lastMessageData["messageType"] as? String,
@@ -385,7 +388,7 @@ class FirebaseManager: ObservableObject {
 
 // MARK: - Helper Extensions
 extension User {
-    init(id: UUID, username: String, artistName: String, bio: String, avatar: String?, joinedDate: Date, isVerified: Bool, friends: [UUID], starredTracks: [UUID]) {
+    init(id: String, username: String, artistName: String, bio: String, avatar: String?, joinedDate: Date, isVerified: Bool, friends: [String], starredTracks: [String]) {
         self.id = id
         self.username = username
         self.artistName = artistName

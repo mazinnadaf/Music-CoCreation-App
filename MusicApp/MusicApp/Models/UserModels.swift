@@ -262,7 +262,7 @@ struct Message: Identifiable, Codable, Equatable {
     }
     
     // Firebase data initializer
-    init(id: UUID, senderId: UUID, receiverId: UUID, content: String, timestamp: Date, isRead: Bool, messageType: MessageType) {
+    init(id: UUID, senderId: String, receiverId: String, content: String, timestamp: Date, isRead: Bool, messageType: MessageType) {
         self.id = id
         self.senderId = senderId
         self.receiverId = receiverId

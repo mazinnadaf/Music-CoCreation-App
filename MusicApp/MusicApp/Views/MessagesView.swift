@@ -50,7 +50,7 @@ struct MessagesView: View {
             }
             .onAppear {
                 if let currentUser = authManager.currentUser {
-                    messagingManager.initialize(with: currentUser.id)
+                    messagingManager.initialize(with: UUID(uuidString: currentUser.id) ?? UUID())
                 }
             }
         }
@@ -247,17 +247,13 @@ struct ChatView: View {
               !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               let receiverId = conversation.participants.first(where: { $0 != currentUserId }) else { return }
         
-        let newMessage = Message(
-            senderId: currentUserId,
-            receiverId: receiverId,
-            content: messageText
-        )
+        let messageContent = messageText
         messageText = "" // Clear immediately for better UX
         
         Task {
             await messagingManager.sendMessage(
-                content: content,
-                to: receiverId,
+                content: messageContent,
+                to: UUID(uuidString: receiverId) ?? UUID(),
                 in: conversationId
             )
         }
@@ -265,10 +261,10 @@ struct ChatView: View {
     
     private func loadMessages() {
         if let currentUserId = authManager.currentUser?.id {
-            messagingManager.initialize(with: currentUserId)
+            messagingManager.initialize(with: UUID(uuidString: currentUserId) ?? UUID())
             
             // Generate conversation ID from participants
-            let sortedParticipants = conversation.participants.map { $0.uuidString }.sorted()
+            let sortedParticipants = conversation.participants.sorted()
             conversationId = sortedParticipants.joined(separator: "_")
             
             messagingManager.loadMessages(for: conversationId)

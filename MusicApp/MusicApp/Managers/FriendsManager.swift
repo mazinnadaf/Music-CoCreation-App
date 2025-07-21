@@ -61,7 +61,7 @@ class FriendsManager: ObservableObject {
             await MainActor.run {
                 // Filter out current user and existing friends
                 self.searchResults = users.filter { user in
-                    user.id != self.currentUserId && 
+                    user.id != self.currentUserId?.uuidString && 
                     !self.friends.contains { $0.id == user.id }
                 }
                 self.isLoading = false
@@ -79,9 +79,9 @@ class FriendsManager: ObservableObject {
         guard let currentUserId = currentUserId else { return }
         
         // Check if friend request already exists
-        let existingRequest = friendRequests.first { 
-            ($0.senderId == currentUserId && $0.receiverId == user.id) ||
-            ($0.senderId == user.id && $0.receiverId == currentUserId)
+        let existingRequest = friendRequests.first { request in
+            (request.senderId == currentUserId && request.receiverId == UUID(uuidString: user.id)) ||
+            (request.senderId == UUID(uuidString: user.id) && request.receiverId == currentUserId)
         }
         
         if existingRequest != nil {
@@ -92,7 +92,7 @@ class FriendsManager: ObservableObject {
         }
         
         do {
-            try await firebaseManager.sendFriendRequest(to: user.id, from: currentUserId)
+            try await firebaseManager.sendFriendRequest(to: UUID(uuidString: user.id) ?? UUID(), from: currentUserId)
             await MainActor.run {
                 self.error = nil
             }
@@ -136,7 +136,7 @@ class FriendsManager: ObservableObject {
     
     func getFriendRequestSender(_ request: FriendRequest) async -> User? {
         do {
-            return try await firebaseManager.getUser(by: request.senderId)
+            return try await firebaseManager.getUser(by: request.senderId.uuidString)
         } catch {
             await MainActor.run {
                 self.error = "Failed to get friend request sender: \(error.localizedDescription)"

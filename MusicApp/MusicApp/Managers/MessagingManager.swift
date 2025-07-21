@@ -65,8 +65,8 @@ class MessagingManager: ObservableObject {
         guard let currentUserId = currentUserId else { return }
         
         let message = Message(
-            senderId: currentUserId,
-            receiverId: receiverId,
+            senderId: currentUserId.uuidString,
+            receiverId: receiverId.uuidString,
             content: content
         )
         
@@ -91,8 +91,8 @@ class MessagingManager: ObservableObject {
         }
     }
     
-    func getOtherParticipant(in conversation: Conversation) -> UUID? {
-        return conversation.participants.first { $0 != currentUserId }
+    func getOtherParticipant(in conversation: Conversation) -> String? {
+        return conversation.participants.first { $0 != currentUserId?.uuidString }
     }
     
     func clearCurrentMessages() {

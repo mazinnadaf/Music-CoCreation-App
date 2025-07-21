@@ -21,6 +21,8 @@ class AuthenticationManager: ObservableObject {
     @Published var hasCompletedOnboarding = false
     
     private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
+    private let userDefaults = UserDefaults.standard
+    private let hasCompletedOnboardingKey = "hasCompletedOnboarding"
     
     init() {
         listenToAuthState()
@@ -124,31 +126,6 @@ class AuthenticationManager: ObservableObject {
             }
         }
     }
-            }
-        }
-    }
-    
-    func signInWithSocial(provider: SocialProvider) {
-        authState = .authenticating
-        
-        // Simulate network delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            let username = self.generateUsername(from: provider)
-            let user = User(username: username, artistName: username.capitalized)
-            self.currentUser = user
-            self.authState = .authenticated(user)
-            self.saveUser(user)
-            
-            // Save user to Firebase
-            Task {
-                do {
-                    try await FirebaseManager.shared.saveUser(user)
-                } catch {
-                    print("Error saving social user to Firebase: \(error)")
-                }
-            }
-        }
-    }
     
     func completeProfile(artistName: String, bio: String?, skills: [Skill]) {
         guard var user = currentUser else { return }
@@ -170,63 +147,6 @@ class AuthenticationManager: ObservableObject {
                 try await FirebaseManager.shared.saveUser(user)
             } catch {
                 print("Error saving updated user profile to Firebase: \(error)")
-=======
-    deinit {
-        if let handle = authStateListenerHandle {
-            Auth.auth().removeStateDidChangeListener(handle)
-        }
-    }
-    
-    // MARK: - Firebase Authentication Methods
-    func signUp(email: String, password: String, username: String, artistName: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        authState = .authenticating
-        Auth.auth().createUser(withEmail: email, password: password) { [weak self] result, error in
-            if let error = error {
-                DispatchQueue.main.async {
-                    self?.authState = .unauthenticated
-                    completion(.failure(error))
-                }
-                return
-            }
-            guard let user = result?.user else {
-                DispatchQueue.main.async {
-                    self?.authState = .unauthenticated
-                    completion(.failure(NSError(domain: "No user", code: -1)))
-                }
-                return
-            }
-            // Create User model and save to Firestore
-            let newUser = User(
-                id: user.uid, // Use Firebase UID as String
-                username: username,
-                artistName: artistName,
-                bio: "",
-                avatar: nil,
-                skills: [],
-                socialLinks: [],
-                stats: UserStats(),
-                badges: [],
-                joinedDate: Date(),
-                isVerified: false,
-                friends: [],
-                starredTracks: []
-            )
-            self?.saveUserToFirestore(newUser) { firestoreResult in
-                DispatchQueue.main.async {
-                    switch firestoreResult {
-                    case .success:
-                        self?.currentUser = newUser
-                        // Since user provided artistName during signup, mark as completed
-                        self?.hasCompletedOnboarding = !artistName.isEmpty
-                        self?.authState = .authenticated(newUser)
-                        print("✅ User signed up successfully, hasCompletedOnboarding: \(self?.hasCompletedOnboarding ?? false)")
-                        completion(.success(()))
-                    case .failure(let firestoreError):
-                        print("❌ Failed to save user to Firestore: \(firestoreError.localizedDescription)")
-                        self?.authState = .unauthenticated
-                        completion(.failure(firestoreError))
-                    }
-                }
             }
         }
     }
@@ -265,7 +185,6 @@ class AuthenticationManager: ObservableObject {
                         completion(.failure(fetchError))
                     }
                 }
->>>>>>> 3f2f36e52679b8005c2fe13a68df97b82f4aa9ab
             }
         }
     }
@@ -357,16 +276,16 @@ class AuthenticationManager: ObservableObject {
         }
     }
     
-    // MARK: - Onboarding/Profile Completion
-    func completeProfile(artistName: String, bio: String?, skills: [Skill]) {
-        guard var user = currentUser else { return }
-        user.artistName = artistName
-        user.bio = bio ?? ""
-        user.skills = skills
-        self.currentUser = user
-        self.hasCompletedOnboarding = true
-        self.authState = .authenticated(user)
-        saveUserToFirestore(user) { _ in }
+    // MARK: - Helper Methods
+    private func generateUsername(from provider: SocialProvider) -> String {
+        return "\(provider.rawValue.lowercased())_user_\(Int.random(in: 1000...9999))"
+    }
+    
+    private func saveUser(_ user: User) {
+        // Save to UserDefaults for local persistence
+        if let encoded = try? JSONEncoder().encode(user) {
+            userDefaults.set(encoded, forKey: "currentUser")
+        }
     }
 }
 

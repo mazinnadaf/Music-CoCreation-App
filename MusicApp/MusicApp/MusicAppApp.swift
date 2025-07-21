@@ -29,49 +29,14 @@ func configureFirebase() {
 }
 
 @main
-struct SyncFlowApp: App {
-    init() {
-        configureFirebase()
-    }
-    @StateObject private var authManager = AuthenticationManager()
-    @StateObject private var audioManager = AudioManager()
-
-    var body: some Scene {
-        WindowGroup {
-            RootView()
-                .environmentObject(authManager)
-                .environmentObject(audioManager)
-                .preferredColorScheme(.dark)
-        }
-    }
-}
-    }
-    
-    print("Firebase configuring with Project ID: \(projectId)")
-    print("Bundle ID: \(bundleId)")
-    
-    FirebaseApp.configure()
-    
-    if FirebaseApp.app() == nil {
-        fatalError("Firebase failed to configure")
-    }
-    
-    print("✅ Firebase configured successfully")
-}
->>>>>>> 3f2f36e52679b8005c2fe13a68df97b82f4aa9ab
-
-@main
-struct SyncFlowApp: App {
-    init() {
-        configureFirebase()
-    }
+struct MusicApp: App {
     @StateObject private var authManager = AuthenticationManager()
     @StateObject private var audioManager = AudioManager()
     
     init() {
-        FirebaseApp.configure()
+        configureFirebase()
     }
-    
+
     var body: some Scene {
         WindowGroup {
             RootView()
