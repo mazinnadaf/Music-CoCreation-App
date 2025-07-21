@@ -78,18 +78,18 @@ struct WelcomeView: View {
             Spacer()
             
             // Logo/Icon
-            Image(systemName: "music.note.house.fill")
-                .font(.system(size: 80))
-                .foregroundStyle(LinearGradient.primaryGradient)
-                .symbolRenderingMode(.hierarchical)
+            Image("sona-logo")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 140, height: 140)
             
             VStack(spacing: 16) {
-                Text("Welcome to BeatSync")
+                Text("Welcome to Sona")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(.primaryText)
                 
-                Text("Create music together, one layer at a time")
+                Text("Create music together, one layer at a time with Sona")
                     .font(.title3)
                     .foregroundColor(.secondaryText)
                     .multilineTextAlignment(.center)
@@ -261,7 +261,7 @@ struct FirstCreationView: View {
             }
         }
         .sheet(isPresented: $showShareOptions) {
-            ShareSheet(items: ["Check out my first beat on BeatSync! 🎵"])
+            ShareSheet(items: ["Check out my first song on Sona! 🎵"])
         }
         .onTapGesture {
             isTextEditorFocused = false

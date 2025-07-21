@@ -19,9 +19,9 @@ struct MockData {
         ),
         Track(
             title: "Punchy Drum Loop",
-            artist: "beatmaker_sam",
-            artistId: "beatmaker_sam_id",
-            avatar: "BS",
+            artist: "Sona",
+            artistId: "sona_id",
+            avatar: "S",
             genre: "Hip-Hop",
             duration: "0:16",
             likes: 89,

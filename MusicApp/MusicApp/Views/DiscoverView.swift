@@ -26,6 +26,10 @@ struct DiscoverView: View {
                 VStack(spacing: 20) {
                     // Header
                     HStack {
+                        Image("sona-logo")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 40, height: 40)
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Discover")
                                 .font(.largeTitle)
