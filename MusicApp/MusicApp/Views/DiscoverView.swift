@@ -2,11 +2,16 @@ import SwiftUI
 
 struct DiscoverView: View {
     @State private var selectedFilter: Track.TrackType? = nil
-    @State private var likedTracks: Set<UUID> = []
+    @State private var likedTracks: Set<String> = []
     @State private var tracks: [Track] = MockData.tracks
     @State private var selectedTrack: Track?
     @State private var showCollaborationView = false
+    @State private var isLoadingTracks = false
+    @State private var currentlyPlayingTrackId: String? = nil
+    @State private var showJoinError = false
+    @State private var joinErrorMessage = ""
     @EnvironmentObject var authManager: AuthenticationManager
+    @StateObject private var audioManager = AudioManager()
     
     var filteredTracks: [Track] {
         if let filter = selectedFilter {
@@ -68,16 +73,7 @@ struct DiscoverView: View {
                     // Feed
                     LazyVStack(spacing: 16) {
                         ForEach(filteredTracks) { track in
-                            TrackCardView(
-                                track: track,
-                                isLiked: likedTracks.contains(track.id),
-                                onLike: { toggleLike(trackId: track.id) },
-                                onPlay: { /* Handle play */ },
-                                onJoin: { track in
-                                    selectedTrack = track
-                                    showCollaborationView = true
-                                }
-                            )
+                            trackCard(for: track)
                         }
                     }
                     .padding(.horizontal)
@@ -101,6 +97,9 @@ struct DiscoverView: View {
             }
             .background(Color.darkBackground)
             .navigationBarHidden(true)
+            .onAppear {
+                loadTracksFromFirebase()
+            }
             .sheet(isPresented: $showCollaborationView) {
                 if let track = selectedTrack {
                     // Create a collaboration from the track
@@ -110,17 +109,22 @@ struct DiscoverView: View {
                             description: track.description ?? "Join this collaboration to add your unique touch!",
                             creator: User(username: "creator", artistName: track.artist),
                             genre: track.genre,
-                            bpm: 120,
-                            key: "C Major"
+                            bpm: track.bpm,
+                            key: track.key
                         )
                     )
                     .environmentObject(authManager)
                 }
             }
+            .alert("Join Failed", isPresented: $showJoinError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(joinErrorMessage)
+            }
         }
     }
     
-    private func toggleLike(trackId: UUID) {
+    private func toggleLike(trackId: String) {
         if likedTracks.contains(trackId) {
             likedTracks.remove(trackId)
             if let index = tracks.firstIndex(where: { $0.id == trackId }) {
@@ -130,6 +134,100 @@ struct DiscoverView: View {
             likedTracks.insert(trackId)
             if let index = tracks.firstIndex(where: { $0.id == trackId }) {
                 tracks[index].likes += 1
+            }
+        }
+    }
+    
+    private func loadTracksFromFirebase() {
+        isLoadingTracks = true
+        audioManager.loadDiscoverTracks { result in
+            isLoadingTracks = false
+            switch result {
+            case .success(let loadedTracks):
+                // Combine Firebase tracks with mock data (optional)
+                self.tracks = loadedTracks + MockData.tracks
+            case .failure(let error):
+                print("Failed to load tracks from Firebase: \(error)")
+                // Fall back to mock data
+                self.tracks = MockData.tracks
+            }
+        }
+    }
+    
+    private func playTrack(_ track: Track) {
+        // If same track is playing, stop it
+        if currentlyPlayingTrackId == track.id {
+            audioManager.stopAllLayers()
+            currentlyPlayingTrackId = nil
+            return
+        }
+        
+        // Set as currently playing
+        currentlyPlayingTrackId = track.id
+        
+        // Play the track
+        audioManager.playTrack(track) { result in
+            switch result {
+            case .success:
+                print("[Discover] Successfully playing track: \(track.title)")
+            case .failure(let error):
+                print("[Discover] Failed to play track: \(error)")
+                currentlyPlayingTrackId = nil
+            }
+        }
+    }
+    
+    private func trackCard(for track: Track) -> some View {
+        TrackCardView(
+            track: track,
+            isLiked: likedTracks.contains(track.id),
+            isPlaying: currentlyPlayingTrackId == track.id,
+            playbackProgress: audioManager.playbackProgress(for: track),
+            currentTime: audioManager.currentTime(for: track),
+            onLike: { toggleLike(trackId: track.id) },
+            onPlay: { playTrack(track) },
+            onJoin: { _ in joinTrackAsCollaborator(track) }
+        )
+        .overlay(
+            // Playing indicator
+            currentlyPlayingTrackId == track.id ?
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.primaryBlue, lineWidth: 2)
+                .animation(.easeInOut(duration: 0.3), value: currentlyPlayingTrackId)
+            : nil
+        )
+    }
+    
+    private func joinTrackAsCollaborator(_ track: Track) {
+        // Check if track is open for collaboration
+        guard track.isOpen else {
+            joinErrorMessage = "This track is not open for collaboration."
+            showJoinError = true
+            return
+        }
+        
+        // Join as collaborator
+        audioManager.joinTrackAsCollaborator(track) { result in
+            switch result {
+            case .success:
+                print("[Discover] Successfully joined track as collaborator")
+                // Navigate to collaboration view
+                selectedTrack = track
+                showCollaborationView = true
+                
+                // Update local track state
+                if let index = tracks.firstIndex(where: { $0.id == track.id }) {
+                    tracks[index].collaborators += 1
+                    // If track reaches max collaborators, close it
+                    if tracks[index].collaborators >= 2 {
+                        tracks[index].isOpen = false
+                    }
+                }
+                
+            case .failure(let error):
+                print("[Discover] Failed to join track: \(error)")
+                joinErrorMessage = error.localizedDescription
+                showJoinError = true
             }
         }
     }

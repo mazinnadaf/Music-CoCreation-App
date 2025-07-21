@@ -142,22 +142,30 @@ struct Layer: Identifiable, Codable {
 }
 
 struct Track: Identifiable, Codable {
-    let id: UUID
+    let id: String
     let title: String
     let artist: String
+    let artistId: String
     let avatar: String
     let genre: String
     let duration: String
     var likes: Int
-    let collaborators: Int
+    var collaborators: Int  // Changed from let to var
     var isOpen: Bool
     let type: TrackType
     let description: String?
+    let layerIds: [String] // References to layers that make up this track
+    let createdAt: Date
+    let bpm: Int
+    let key: String?
+    var isPublished: Bool
+    var playCount: Int
     
-    init(title: String, artist: String, avatar: String, genre: String, duration: String, likes: Int, collaborators: Int, isOpen: Bool, type: TrackType, description: String?) {
-        self.id = UUID()
+    init(title: String, artist: String, artistId: String, avatar: String, genre: String, duration: String, likes: Int, collaborators: Int, isOpen: Bool, type: TrackType, description: String?, layerIds: [String], bpm: Int, key: String? = nil) {
+        self.id = UUID().uuidString
         self.title = title
         self.artist = artist
+        self.artistId = artistId
         self.avatar = avatar
         self.genre = genre
         self.duration = duration
@@ -166,6 +174,12 @@ struct Track: Identifiable, Codable {
         self.isOpen = isOpen
         self.type = type
         self.description = description
+        self.layerIds = layerIds
+        self.createdAt = Date()
+        self.bpm = bpm
+        self.key = key
+        self.isPublished = true
+        self.playCount = 0
     }
     
     enum TrackType: String, CaseIterable, Codable {
@@ -775,7 +789,7 @@ extension AudioManager {
             .child("\(layer.id).wav")
         
         // Upload audio file
-        let uploadTask = storageRef.putFile(from: localAudioURL, metadata: nil) { metadata, error in
+        _ = storageRef.putFile(from: localAudioURL, metadata: nil) { metadata, error in
             if let error = error {
                 print("[Firebase] ❌ Storage upload failed: \(error.localizedDescription)")
                 completion(.failure(error))
@@ -900,5 +914,276 @@ extension AudioManager {
                     }
                 }
             }
+    }
+    
+/// Post a track to the discover page
+    func postTrackToDiscover(title: String, description: String?, genre: String, isStem: Bool = false, allowCollaboration: Bool = false, completion: @escaping (Result<Track, Error>) -> Void) {
+        guard let user = Auth.auth().currentUser else {
+            print("[Firebase] ❌ No authenticated user found")
+            completion(.failure(NSError(domain: "No user", code: -1)))
+            return
+        }
+        
+        // Get user details
+        let db = Firestore.firestore()
+        db.collection("users").document(user.uid).getDocument { userSnapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            guard let userData = userSnapshot?.data(),
+                  let artistName = userData["artistName"] as? String else {
+                completion(.failure(NSError(domain: "User data not found", code: -1)))
+                return
+            }
+            
+            // Calculate total duration from all layers
+            let totalDuration = self.layers.reduce(0) { max($0, $1.duration) }
+            let durationString = String(format: "%d:%02d", Int(totalDuration) / 60, Int(totalDuration) % 60)
+            
+            // Get BPM from first layer or default
+            let bpm = self.layers.first?.bpm ?? 120
+            let key = self.layers.first?.key
+            
+// Determine track type based on settings
+            let trackType: Track.TrackType = isStem ? .stem : .track
+            
+            // Create track with layer IDs
+            let track = Track(
+                title: title,
+                artist: artistName,
+                artistId: user.uid,
+                avatar: userData["avatar"] as? String ?? "",
+                genre: genre,
+                duration: durationString,
+                likes: 0,
+                collaborators: isStem ? 0 : 1, // Stems start with 0 collaborators
+                isOpen: allowCollaboration,
+                type: trackType,
+                description: description,
+                layerIds: self.layers.map { $0.id },
+                bpm: bpm,
+                key: key
+            )
+            
+            // Save track to discover collection
+            do {
+                try db.collection("discover").document(track.id).setData(Firestore.Encoder().encode(track)) { error in
+                    if let error = error {
+                        print("[Firebase] ❌ Failed to post track: \(error.localizedDescription)")
+                        completion(.failure(error))
+                    } else {
+                        print("[Firebase] ✅ Track posted to discover successfully")
+                        
+                        // Also save to user's tracks
+                        db.collection("users").document(user.uid)
+                            .collection("tracks").document(track.id)
+                            .setData(try! Firestore.Encoder().encode(track)) { error in
+                                if let error = error {
+                                    print("[Firebase] ❌ Failed to save to user tracks: \(error)")
+                                } else {
+                                    print("[Firebase] ✅ Track saved to user collection")
+                                }
+                            }
+                        
+                        completion(.success(track))
+                    }
+                }
+            } catch {
+                print("[Firebase] ❌ Error encoding track data: \(error.localizedDescription)")
+                completion(.failure(error))
+            }
+        }
+    }
+    
+    /// Load tracks from discover page
+    func loadDiscoverTracks(completion: @escaping (Result<[Track], Error>) -> Void) {
+        let db = Firestore.firestore()
+        db.collection("discover")
+            .order(by: "createdAt", descending: true)
+            .limit(to: 50)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("[Firebase] ❌ Failed to load discover tracks: \(error.localizedDescription)")
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let documents = snapshot?.documents else {
+                    completion(.success([]))
+                    return
+                }
+                
+                var tracks: [Track] = []
+                for document in documents {
+                    do {
+                        let track = try document.data(as: Track.self)
+                        tracks.append(track)
+                    } catch {
+                        print("[Firebase] ❌ Failed to decode track \(document.documentID): \(error)")
+                    }
+                }
+                
+                print("[Firebase] ✅ Loaded \(tracks.count) tracks from discover")
+                completion(.success(tracks))
+            }
+    }
+    
+    /// Play a track from the discover page
+    func playTrack(_ track: Track, completion: @escaping (Result<Void, Error>) -> Void) {
+        print("[AudioPlayer] 🎵 Starting to play track: \(track.title)")
+        
+        // Stop all currently playing layers
+        stopAllLayers()
+        
+        // Load layers for this track
+        loadLayersForTrack(track) { [weak self] result in
+            switch result {
+            case .success(let loadedLayers):
+                print("[AudioPlayer] ✅ Loaded \(loadedLayers.count) layers for track")
+                
+                // Add layers to the player
+                self?.layers = loadedLayers
+                
+                // Play all layers
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self?.playAllLayers()
+                }
+                
+                completion(.success(()))
+                
+            case .failure(let error):
+                print("[AudioPlayer] ❌ Failed to load layers: \(error)")
+                completion(.failure(error))
+            }
+        }
+    }
+    
+    /// Load layers for a specific track
+    private func loadLayersForTrack(_ track: Track, completion: @escaping (Result<[Layer], Error>) -> Void) {
+        guard !track.layerIds.isEmpty else {
+            completion(.success([]))
+            return
+        }
+        
+        let db = Firestore.firestore()
+        let group = DispatchGroup()
+        var loadedLayers: [Layer] = []
+        var loadError: Error?
+        
+        // Load each layer from the track creator's clips
+        for layerId in track.layerIds {
+            group.enter()
+            
+            db.collection("users").document(track.artistId)
+                .collection("clips").document(layerId)
+                .getDocument { snapshot, error in
+                    defer { group.leave() }
+                    
+                    if let error = error {
+                        print("[AudioPlayer] ❌ Failed to load layer \(layerId): \(error)")
+                        loadError = error
+                        return
+                    }
+                    
+                    guard snapshot?.data() != nil else {
+                        print("[AudioPlayer] ❌ No data for layer \(layerId)")
+                        return
+                    }
+                    
+                    do {
+                        let layerData = try snapshot!.data(as: LayerData.self)
+                        let layer = layerData.toLayer()
+                        loadedLayers.append(layer)
+                        print("[AudioPlayer] ✅ Loaded layer: \(layer.name)")
+                    } catch {
+                        print("[AudioPlayer] ❌ Failed to decode layer: \(error)")
+                        loadError = error
+                    }
+                }
+        }
+        
+        group.notify(queue: .main) {
+            if let error = loadError {
+                completion(.failure(error))
+            } else {
+                completion(.success(loadedLayers))
+            }
+        }
+    }
+    
+    /// Join a track as collaborator (use stem)
+    func joinTrackAsCollaborator(_ track: Track, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let user = Auth.auth().currentUser else {
+            completion(.failure(NSError(domain: "No user", code: -1)))
+            return
+        }
+        
+        let db = Firestore.firestore()
+        
+        // First check if already a collaborator or if track is full
+        let collaboratorsRef = db.collection("discover").document(track.id).collection("collaborators")
+        
+        collaboratorsRef.getDocuments { snapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            let existingCount = snapshot?.documents.count ?? 0
+            
+            // Check if already joined
+            if snapshot?.documents.first(where: { $0.documentID == user.uid }) != nil {
+                completion(.failure(NSError(domain: "Already joined", code: -1, userInfo: [NSLocalizedDescriptionKey: "You've already joined this track"])))
+                return
+            }
+            
+            // Add as collaborator
+            let collaboratorData: [String: Any] = [
+                "userId": user.uid,
+                "joinedAt": FieldValue.serverTimestamp(),
+                "status": "active"
+            ]
+            
+            collaboratorsRef.document(user.uid).setData(collaboratorData) { error in
+                if let error = error {
+                    completion(.failure(error))
+                } else {
+                    print("[Firebase] ✅ Successfully joined track as collaborator")
+                    
+                    // Update the track's collaborator count
+                    db.collection("discover").document(track.id).updateData([
+                        "collaborators": FieldValue.increment(Int64(1))
+                    ]) { _ in
+                        completion(.success(()))
+                    }
+                }
+            }
+        }
+    }
+    
+    /// Get playback progress for a track
+    func playbackProgress(for track: Track) -> Double {
+        // Check if any layer from this track is playing
+        for layer in layers {
+            if track.layerIds.contains(layer.id) && layer.isPlaying {
+                return layer.currentTime / layer.duration
+            }
+        }
+        return 0.0
+    }
+    
+    /// Get current time string for a track
+    func currentTime(for track: Track) -> String {
+        // Check if any layer from this track is playing
+        for layer in layers {
+            if track.layerIds.contains(layer.id) && layer.isPlaying {
+                let minutes = Int(layer.currentTime) / 60
+                let seconds = Int(layer.currentTime) % 60
+                return String(format: "%d:%02d", minutes, seconds)
+            }
+        }
+        return "0:00"
     }
 }
