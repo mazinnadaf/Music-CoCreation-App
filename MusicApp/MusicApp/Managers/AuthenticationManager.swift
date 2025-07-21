@@ -178,19 +178,22 @@ class AuthenticationManager: ObservableObject {
         authStateListenerHandle = Auth.auth().addStateDidChangeListener { [weak self] auth, user in
             guard let self = self else { return }
             if let user = user {
+                print("[Auth] 🔄 User authenticated: \(user.uid)")
                 // Fetch user profile from Firestore
                 self.fetchUserFromFirestore(uid: user.uid) { result in
                     DispatchQueue.main.async {
                         switch result {
                         case .success(let userModel):
+                            print("[Auth] ✅ User profile loaded successfully")
                             self.currentUser = userModel
                             // Check if user has completed basic profile setup
                             self.hasCompletedOnboarding = !userModel.artistName.isEmpty && !userModel.skills.isEmpty
                             self.authState = .authenticated(userModel)
                             // Notify that authentication is complete and user clips should be loaded
+                            print("[Auth] 📢 Sending userAuthenticated notification")
                             NotificationCenter.default.post(name: .userAuthenticated, object: nil)
                         case .failure(let error):
-                            print("Error fetching user from Firestore: \(error.localizedDescription)")
+                            print("[Auth] ❌ Error fetching user from Firestore: \(error.localizedDescription)")
                             // If user exists in Auth but not in Firestore, sign them out
                             try? Auth.auth().signOut()
                             self.authState = .unauthenticated
@@ -198,6 +201,7 @@ class AuthenticationManager: ObservableObject {
                     }
                 }
             } else {
+                print("[Auth] 🔄 User signed out")
                 DispatchQueue.main.async {
                     self.currentUser = nil
                     self.hasCompletedOnboarding = false
