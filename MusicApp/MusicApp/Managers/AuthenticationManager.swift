@@ -29,6 +29,15 @@ class AuthenticationManager: ObservableObject {
         self.currentUser = guestUser
         self.authState = .authenticated(guestUser)
         self.hasCompletedOnboarding = false
+        
+        // Save user to Firebase
+        Task {
+            do {
+                try await FirebaseManager.shared.saveUser(guestUser)
+            } catch {
+                print("Error saving guest user to Firebase: \(error)")
+            }
+        }
     }
     
     func signInWithSocial(provider: SocialProvider) {
@@ -41,6 +50,15 @@ class AuthenticationManager: ObservableObject {
             self.currentUser = user
             self.authState = .authenticated(user)
             self.saveUser(user)
+            
+            // Save user to Firebase
+            Task {
+                do {
+                    try await FirebaseManager.shared.saveUser(user)
+                } catch {
+                    print("Error saving social user to Firebase: \(error)")
+                }
+            }
         }
     }
     
@@ -57,6 +75,15 @@ class AuthenticationManager: ObservableObject {
         
         saveUser(user)
         userDefaults.set(true, forKey: hasCompletedOnboardingKey)
+        
+        // Save updated user to Firebase
+        Task {
+            do {
+                try await FirebaseManager.shared.saveUser(user)
+            } catch {
+                print("Error saving updated user profile to Firebase: \(error)")
+            }
+        }
     }
     
     func signOut() {

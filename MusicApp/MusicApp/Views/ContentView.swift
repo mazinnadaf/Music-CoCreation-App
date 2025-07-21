@@ -17,19 +17,26 @@ struct ContentView: View {
                 }
                 .tag(1)
             
+            FriendsView()
+                .tabItem {
+                    Image(systemName: "person.2.fill")
+                    Text("Friends")
+                }
+                .tag(2)
+            
             MessagesView()
                 .tabItem {
                     Image(systemName: "bubble.left.and.bubble.right")
                     Text("Messages")
                 }
-                .tag(2)
+                .tag(3)
             
             ProfileView()
                 .tabItem {
                     Image(systemName: "person.fill")
                     Text("Profile")
                 }
-                .tag(3)
+                .tag(4)
         }
         .accentColor(Color.purple)
     }

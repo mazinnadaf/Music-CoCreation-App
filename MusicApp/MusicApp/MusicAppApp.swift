@@ -1,9 +1,14 @@
 import SwiftUI
+import Firebase
 
 @main
 struct SyncFlowApp: App {
     @StateObject private var authManager = AuthenticationManager()
     @StateObject private var audioManager = AudioManager()
+    
+    init() {
+        FirebaseApp.configure()
+    }
     
     var body: some Scene {
         WindowGroup {
